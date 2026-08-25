@@ -16,6 +16,12 @@
     },
     "plugins": [
       "expo-sqlite"
-    ]
+    ],
+    "owner": "chuckie99",
+    "extra": {
+      "eas": {
+        "projectId": "ab6dc31a-8a9c-4ac9-ba4d-0cbea1919fbc"
+      }
+    }
   }
 }
