@@ -24,14 +24,16 @@ function whereClause(period: Period): string {
 export default function HistoryScreen() {
   const [period, setPeriod] = React.useState<Period>('today')
 
-  const rows = React.useMemo(() => {
-    return getDb().getAllSync<Row>(
-      `SELECT t.invoice, t.total, t.discount, t.payment_method, t.created_at,
+  const rows = React.useMemo<Row[]>(() => {
+    try {
+      return getDb().getAllSync<Row>(
+        `SELECT t.invoice, t.total, COALESCE(t.discount, 0) AS discount, t.payment_method, t.created_at,
               GROUP_CONCAT(ti.qty || 'x ' || ti.product_name, char(10)) AS items
        FROM transactions t JOIN transaction_items ti ON ti.transaction_id = t.id
        WHERE ${whereClause(period)}
        GROUP BY t.id ORDER BY t.id DESC`
-    )
+      )
+    } catch { return [] }
   }, [period])
 
   const revenue = rows.reduce((s, r) => s + r.total, 0)
@@ -41,12 +43,14 @@ export default function HistoryScreen() {
 
   // Produk terlaris untuk periode ini
   const topProducts = React.useMemo(() => {
-    return getDb().getAllSync<{ name: string; qty: number; sales: number }>(
-      `SELECT ti.product_name AS name, SUM(ti.qty) AS qty, SUM(ti.line_total) AS sales
+    try {
+      return getDb().getAllSync<{ name: string; qty: number; sales: number }>(
+        `SELECT ti.product_name AS name, SUM(ti.qty) AS qty, SUM(ti.line_total) AS sales
        FROM transaction_items ti JOIN transactions t ON t.id = ti.transaction_id
        WHERE ${whereClause(period)}
        GROUP BY ti.product_name ORDER BY qty DESC LIMIT 5`
-    )
+      )
+    } catch { return [] }
   }, [period])
 
   return (

@@ -3,6 +3,7 @@ import { View, StyleSheet, TextInput, Pressable, Linking } from 'react-native'
 import { Text, Surface } from 'react-native-paper'
 import { colors } from '../theme/theme'
 import { VENDOR_WA } from '../license/license'
+import * as Clipboard from 'expo-clipboard'
 
 /**
  * High-contrast license gate.
@@ -27,7 +28,16 @@ export default function ActivationGate({ deviceCode, onActivate }: { deviceCode:
       <Surface style={styles.card} elevation={0}>
         <Text style={styles.sectionLabel}>Device ID HP Ini</Text>
         <Surface style={styles.deviceBox} elevation={0}>
-          <Text selectable style={styles.deviceCode}>{deviceCode}</Text>
+          <Pressable onLongPress={() => Clipboard.setStringAsync(deviceCode).catch(() => {})} delayLongPress={200}>
+            <Text selectable style={styles.deviceCode}>{deviceCode}</Text>
+          </Pressable>
+          <Pressable
+            onPress={async () => { await Clipboard.setStringAsync(deviceCode).catch(() => {}) }}
+            android_ripple={{ color: 'rgba(255,255,255,0.3)' }}
+            style={styles.copyBtn}
+          >
+            <Text style={styles.copyBtnTxt}>📋 Salin Device ID</Text>
+          </Pressable>
         </Surface>
         <Text style={styles.helpText}>
           Kirim kode di atas ke penjual untuk mendapatkan Kode Aktivasi Anda.
@@ -84,7 +94,9 @@ const styles = StyleSheet.create({
   card: { width: '100%', backgroundColor: '#FFFFFF', borderRadius: 18, borderWidth: 1, borderColor: colors.border, padding: 24 },
   sectionLabel: { fontSize: 13, fontWeight: '700', color: colors.textMuted, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 },
   deviceBox: { backgroundColor: colors.chipBg, borderRadius: 12, borderWidth: 1, borderColor: colors.green, alignItems: 'center', paddingVertical: 16 },
-  deviceCode: { fontSize: 24, fontWeight: '900', color: colors.greenDark, letterSpacing: 3 },
+  deviceCode: { fontSize: 22, fontWeight: '900', color: colors.greenDark, letterSpacing: 3 },
+  copyBtn: { backgroundColor: '#FFFFFF', borderRadius: 999, paddingHorizontal: 14, paddingVertical: 6, marginTop: 10, alignSelf: 'center' },
+  copyBtnTxt: { color: colors.greenDark, fontWeight: '800', fontSize: 12 },
   helpText: { fontSize: 13, color: colors.textMuted, marginTop: 10, lineHeight: 18 },
   waBtn: { backgroundColor: '#25D366', borderRadius: 12, height: 50, alignItems: 'center', justifyContent: 'center', marginTop: 14 },
   waBtnText: { color: '#FFF', fontWeight: '800', fontSize: 15, letterSpacing: 0.5 },

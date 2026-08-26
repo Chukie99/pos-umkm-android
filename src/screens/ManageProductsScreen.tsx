@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { View, StyleSheet, ScrollView, Pressable, Alert } from 'react-native'
+import { View, StyleSheet, ScrollView, Pressable, Alert, Image } from 'react-native'
 import { Text, Surface, Modal, TextInput, Switch, Button } from 'react-native-paper'
 import { colors } from '../theme/theme'
 import {
@@ -9,8 +9,8 @@ import {
 
 const rupiah = (n: number) => 'Rp ' + Math.round(n).toLocaleString('id-ID')
 
-interface EditingState { id: number | null; name: string; price: string; stock: string; categoryId: number | null }
-const EMPTY_EDIT: EditingState = { id: null, name: '', price: '', stock: '', categoryId: null }
+interface EditingState { id: number | null; name: string; price: string; stock: string; imageUri: string | null; categoryId: number | null }
+const EMPTY_EDIT: EditingState = { id: null, name: '', price: '', stock: '', imageUri: null, categoryId: null }
 
 export default function ManageProductsScreen() {
   const [products, setProducts] = useState<ProductRow[]>(() => listAllProducts())
@@ -24,16 +24,38 @@ export default function ManageProductsScreen() {
   const openAdd = () => setEditing({ ...EMPTY_EDIT })
 
   const openEdit = (p: ProductRow) =>
-    setEditing({ id: p.id, name: p.name, price: String(p.price), stock: p.stock === null ? '' : String(p.stock), categoryId: p.category_id })
+    setEditing({ id: p.id, name: p.name, price: String(p.price), stock: p.stock === null ? '' : String(p.stock), imageUri: p.image_uri, categoryId: p.category_id })
+
+  const pickImage = async () => {
+    try {
+      const ImagePicker = await import('expo-image-picker')
+      const perm = await ImagePicker.requestMediaLibraryPermissionsAsync()
+      if (!perm.granted) {
+        Alert.alert('Izin dibutuhkan', 'Berikan izin akses galeri untuk memilih foto produk.')
+        return
+      }
+      const res = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        quality: 0.5,
+        allowsEditing: true,
+        aspect: [1, 1],
+      })
+      if (!res.canceled && res.assets[0]) {
+        setEditing((prev) => (prev ? { ...prev, imageUri: res.assets[0].uri } : prev))
+      }
+    } catch (e) {
+      Alert.alert('Gagal', e instanceof Error ? e.message : String(e))
+    }
+  }
 
   const save = () => {
     if (!editing) return
     const stockVal = editing.stock.trim() === '' ? null : Number(editing.stock.replace(/\D/g, ''))
     try {
       if (editing.id === null) {
-        addProduct(editing.name, Number(editing.price.replace(/\D/g, '')), editing.categoryId, stockVal)
+        addProduct(editing.name, Number(editing.price.replace(/\D/g, '')), editing.categoryId, stockVal, editing.imageUri)
       } else {
-        updateProduct(editing.id, editing.name, Number(editing.price.replace(/\D/g, '')), editing.categoryId, stockVal)
+        updateProduct(editing.id, editing.name, Number(editing.price.replace(/\D/g, '')), editing.categoryId, stockVal, editing.imageUri)
       }
       setEditing(null)
       refresh()
@@ -129,20 +151,45 @@ export default function ManageProductsScreen() {
 
             <Text style={styles.label}>Nama Produk *</Text>
             <TextInput value={editing.name} onChangeText={(v) => setEditing({ ...editing, name: v })}
-              style={{ backgroundColor: '#FFF' }} placeholder="contoh: Kopi Susu Gula Aren" />
+              style={{ backgroundColor: '#FFF' }} placeholder="contoh: Kopi Susu Gula Aren"
+              placeholderTextColor={colors.textMuted} />
 
-            <Text style={styles.label}>Harga *</Text>
+            <Text style={styles.label}>Harga Jual * (per item, dalam rupiah)</Text>
+            <Surface style={[styles.priceHintBox, { backgroundColor: colors.chipBg }]} elevation={0}>
+              <Text style={styles.priceHintTxt}>Contoh: 15000 = Rp 15.000</Text>
+            </Surface>
             <TextInput value={editing.price}
               onChangeText={(v) => setEditing({ ...editing, price: v.replace(/\D/g, '') })}
               keyboardType="number-pad"
               left={<TextInput.Affix text="Rp " />}
-              style={{ backgroundColor: '#FFF' }} placeholder="15000" />
+              style={{ backgroundColor: '#FFF', fontSize: 18, fontWeight: '800' }}
+              placeholder="0" placeholderTextColor={colors.textMuted} />
 
-            <Text style={styles.label}>Stok (opsional)</Text>
+            <Text style={styles.label}>Stok — jumlah barang tersedia</Text>
             <TextInput value={editing.stock}
               onChangeText={(v) => setEditing({ ...editing, stock: v.replace(/\D/g, '') })}
               keyboardType="number-pad"
-              style={{ backgroundColor: '#FFF' }} placeholder="Kosongkan jika tidak ingin dilacak" />
+              left={<TextInput.Affix text="Stok: " />}
+              style={{ backgroundColor: '#FFF' }} placeholder="Kosongkan jika tidak perlu dilacak"
+              placeholderTextColor={colors.textMuted} />
+
+            <Text style={styles.label}>Foto Produk (opsional)</Text>
+            <Pressable onPress={pickImage} style={styles.imgPicker}>
+              {editing.imageUri ? (
+                <>
+                  <Image source={{ uri: editing.imageUri }} style={styles.imgPreview} />
+                  <Pressable onPress={() => setEditing({ ...editing, imageUri: null })} hitSlop={10}>
+                    <Text style={styles.imgRemove}>✕ hapus foto</Text>
+                  </Pressable>
+                </>
+              ) : (
+                <>
+                  <Text style={styles.imgPickerIcon}>🖼️</Text>
+                  <Text style={styles.imgPickerTxt}>Pilih dari Galeri</Text>
+                  <Text style={styles.imgPickerSub}>Foto muncul di layar kasir biar makin menarik</Text>
+                </>
+              )}
+            </Pressable>
 
             <Text style={styles.label}>Kategori</Text>
             <View style={styles.chips}>
@@ -191,7 +238,18 @@ const styles = StyleSheet.create({
   del: { fontSize: 18 },
   modal: { backgroundColor: '#FFF', margin: 20, borderRadius: 20, padding: 22 },
   modalTitle: { fontWeight: '800', color: colors.text, marginBottom: 16 },
-  label: { fontSize: 13, fontWeight: '600', color: colors.textMuted, marginTop: 12, marginBottom: 6 },
+  label: { fontSize: 13, fontWeight: '600', color: colors.text, marginTop: 12, marginBottom: 6 },
+  priceHintBox: { borderRadius: 8, paddingVertical: 4, paddingHorizontal: 10, marginBottom: 6, alignSelf: 'flex-start' },
+  priceHintTxt: { fontSize: 11.5, color: colors.greenDark, fontWeight: '700' },
+  imgPicker: {
+    borderWidth: 1.5, borderStyle: 'dashed', borderColor: colors.border, borderRadius: 14,
+    alignItems: 'center', paddingVertical: 18, marginTop: 2, backgroundColor: colors.chipBg,
+  },
+  imgPickerIcon: { fontSize: 28 },
+  imgPickerTxt: { color: colors.greenDark, fontWeight: '800', marginTop: 6, fontSize: 14 },
+  imgPickerSub: { color: colors.textMuted, fontSize: 11, marginTop: 3 },
+  imgPreview: { width: 110, height: 110, borderRadius: 12 },
+  imgRemove: { color: colors.error, fontWeight: '700', fontSize: 12, marginTop: 8 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {
     borderWidth: 1, borderColor: colors.border, borderRadius: 999,

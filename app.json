@@ -17,7 +17,8 @@
     "plugins": [
       "expo-sqlite",
       "expo-sharing",
-      "expo-document-picker"
+      "expo-document-picker",
+      "expo-image-picker"
     ],
     "owner": "chuckie99",
     "extra": {

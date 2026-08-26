@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react'
-import { View, StyleSheet, ScrollView, Pressable } from 'react-native'
+import { View, StyleSheet, ScrollView, Pressable, Image } from 'react-native'
 import { Text, Surface, Modal } from 'react-native-paper'
 import { colors } from '../theme/theme'
 import { listProducts, listModifierGroups, cartTotals, checkout, type Product, type ModifierGroup, type CartLine } from '../utils/pos'
@@ -119,6 +119,9 @@ export default function CashierScreen({ onSold }: { onSold: () => void }) {
                 <View style={styles.stockTag}>
                   <Text style={styles.stockTagTxt}>{p.stock <= 0 ? 'Habis' : `${p.stock} sisa`}</Text>
                 </View>
+              ) : null}
+              {p.image_uri ? (
+                <Image source={{ uri: p.image_uri }} style={styles.cardImg} />
               ) : null}
               <Text numberOfLines={2} style={styles.cardName}>{p.name}</Text>
               <Text style={styles.cardPrice}>{rupiah(p.price)}</Text>
@@ -240,6 +243,7 @@ const styles = StyleSheet.create({
   cardName: { fontSize: 17, fontWeight: '800', color: colors.text, lineHeight: 22 },
   cardPrice: { fontSize: 15, fontWeight: '700', color: colors.greenDark, marginTop: 6 },
   cardCat: { fontSize: 11, color: colors.textMuted, marginTop: 4 },
+  cardImg: { width: '100%', height: 64, borderRadius: 10, marginBottom: 8, backgroundColor: colors.chipBg },
   emptyTxt: { color: colors.textMuted, fontSize: 14, textAlign: 'center', marginTop: 40 },
   cardActive: { borderColor: colors.green, borderWidth: 2, backgroundColor: colors.chipBg },
   cardBadge: {

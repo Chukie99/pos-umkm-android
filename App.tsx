@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react'
-import { View, Text as RNText } from 'react-native'
+import { View } from 'react-native'
 import { PaperProvider, Appbar, SegmentedButtons } from 'react-native-paper'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { StatusBar } from 'expo-status-bar'
 
 import { initDatabase, seedDemoData } from './src/db/database'
-import { theme } from './src/theme/theme'
+import { theme, colors, applyTheme } from './src/theme/theme'
+import { getTheme, getSetting, setSetting, type ThemePref } from './src/utils/settings'
 import { getDeviceId, formatDeviceCode, isActivated, activate } from './src/license/license'
 import ActivationGate from './src/screens/ActivationGate'
 import CashierScreen from './src/screens/CashierScreen'
@@ -21,21 +22,35 @@ export default function App() {
   const [deviceCode, setDeviceCode] = useState('')
   const [tab, setTab] = useState<Tab>('kasir')
   const [refreshKey, setRefreshKey] = useState(0)
+  const [dark, setDark] = useState(false)
+  // bump agar semua layar re-render saat tema berubah (colors adalah let-binding)
+  const [themeTick, setThemeTick] = useState(0)
 
   useEffect(() => {
     initDatabase()
     seedDemoData()
     setDeviceCode(formatDeviceCode(getDeviceId()))
     setActivated(isActivated())
+    const pref: ThemePref = getTheme()
+    applyTheme(pref)
+    setDark(pref === 'dark')
     setReady(true)
   }, [])
+
+  const toggleTheme = () => {
+    const next: ThemePref = dark ? 'light' : 'dark'
+    setSetting('theme', next)
+    applyTheme(next)
+    setDark(!dark)
+    setThemeTick((t) => t + 1)
+  }
 
   if (!ready) return null
 
   return (
     <PaperProvider theme={theme}>
       <SafeAreaProvider>
-        <StatusBar style="dark" />
+        <StatusBar style={dark ? 'light' : 'dark'} />
         {!activated ? (
           <ActivationGate
             deviceCode={deviceCode}
@@ -46,14 +61,16 @@ export default function App() {
             }}
           />
         ) : (
-          <View style={{ flex: 1, backgroundColor: '#F5F5F5' }}>
-            <Appbar.Header elevated={false} style={{ backgroundColor: '#FFFFFF' }}>
+          <View key={themeTick} style={{ flex: 1, backgroundColor: colors.bg }}>
+            <Appbar.Header elevated={false} style={{ backgroundColor: dark ? '#1D2C29' : '#FFFFFF' }}>
               <Appbar.Content
-                title={tab === 'kasir' ? 'POS UMKM — Kasir'
-                     : tab === 'produk' ? 'Kelola Produk & Menu'
-                     : tab === 'pengaturan' ? 'Pengaturan & Backup'
-                     : 'Laporan & Riwayat'}
-                titleStyle={{ fontWeight: '800', color: '#1C1B1F', fontSize: 19 }}
+                title={
+                  tab === 'kasir' ? `${getSetting('storeName', 'POS UMKM')} — Kasir`
+                  : tab === 'produk' ? 'Kelola Produk & Menu'
+                  : tab === 'pengaturan' ? 'Pengaturan & Backup'
+                  : 'Laporan & Riwayat'
+                }
+                titleStyle={{ fontWeight: '800', color: colors.text, fontSize: 19 }}
               />
             </Appbar.Header>
 
@@ -61,10 +78,15 @@ export default function App() {
               {tab === 'kasir' && <CashierScreen onSold={() => setRefreshKey((k) => k + 1)} />}
               {tab === 'produk' && <ManageProductsScreen key={refreshKey} />}
               {tab === 'riwayat' && <HistoryScreen key={refreshKey} />}
-              {tab === 'pengaturan' && <SettingsScreen />}
+              {tab === 'pengaturan' && (
+                <SettingsScreen
+                  dark={dark}
+                  onToggleTheme={toggleTheme}
+                />
+              )}
             </View>
 
-            <View style={{ paddingHorizontal: 14, paddingBottom: 10, backgroundColor: '#F5F5F5' }}>
+            <View style={{ paddingHorizontal: 14, paddingBottom: 10, backgroundColor: colors.bg }}>
               <SegmentedButtons
                 value={tab}
                 onValueChange={(v) => setTab(v as Tab)}
@@ -74,7 +96,7 @@ export default function App() {
                   { value: 'riwayat', label: '📊 Laporan', showSelectedCheck: false },
                   { value: 'pengaturan', label: '⚙️ Lainnya', showSelectedCheck: false },
                 ]}
-                style={{ backgroundColor: '#FFFFFF' }}
+                style={{ backgroundColor: dark ? '#1D2C29' : '#FFFFFF' }}
               />
             </View>
           </View>

@@ -8,11 +8,12 @@ export interface ProductRow {
   category_id: number | null
   is_active: number
   stock: number | null
+  image_uri: string | null
 }
 
 export function listAllProducts(): ProductRow[] {
   return getDb().getAllSync<ProductRow>(
-    `SELECT p.id, p.name, p.price, p.category_id, c.name AS category_name, p.is_active, p.stock
+    `SELECT p.id, p.name, p.price, p.category_id, c.name AS category_name, p.is_active, p.stock, p.image_uri
      FROM products p LEFT JOIN categories c ON c.id = p.category_id
      ORDER BY p.is_active DESC, p.name`
   )
@@ -22,7 +23,7 @@ export function listCategories(): { id: number; name: string }[] {
   return getDb().getAllSync('SELECT id, name FROM categories ORDER BY name')
 }
 
-export function addProduct(name: string, price: number, categoryId: number | null, stock: number | null = null): void {
+export function addProduct(name: string, price: number, categoryId: number | null, stock: number | null = null, imageUri: string | null = null): void {
   if (!name.trim()) throw new Error('Nama produk wajib diisi')
   if (!(price > 0)) throw new Error('Harga harus lebih dari 0')
   getDb().runSync(
@@ -31,7 +32,7 @@ export function addProduct(name: string, price: number, categoryId: number | nul
   )
 }
 
-export function updateProduct(id: number, name: string, price: number, categoryId: number | null, stock: number | null = null): void {
+export function updateProduct(id: number, name: string, price: number, categoryId: number | null, stock: number | null = null, imageUri: string | null = null): void {
   if (!name.trim()) throw new Error('Nama produk wajib diisi')
   if (!(price > 0)) throw new Error('Harga harus lebih dari 0')
   getDb().runSync(

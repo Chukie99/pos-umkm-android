@@ -110,11 +110,30 @@ async function gen() {
 }
 
 function copyCode() {
-  navigator.clipboard?.writeText(lastCode).then(() => {
+  const done = () => {
     const b = document.querySelector('.copy');
     b.textContent = '✅ TERSALIN!';
     setTimeout(() => b.textContent = '📋 SALIN KODE', 1500);
-  });
+  };
+  // Coba Clipboard API dulu; kalau gagal (non-HTTPS / webview), pakai cara lama
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(lastCode).then(done).catch(() => fallbackCopy(done));
+  } else {
+    fallbackCopy(done);
+  }
+}
+
+function fallbackCopy(done) {
+  const ta = document.createElement('textarea');
+  ta.value = lastCode;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  try { document.execCommand('copy'); done(); }
+  catch (e) { alert('Salin manual:\n' + lastCode); }
+  document.body.removeChild(ta);
 }
 
 function addHistory(dev, code) {

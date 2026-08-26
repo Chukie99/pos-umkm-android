@@ -37,19 +37,46 @@ export const theme = {
   fonts: configureFonts({ config: { fontFamily: 'Roboto' } }),
 }
 
-export const colors = {
-  bg: '#FBF6EC',          // latar hangat (turunan krem)
-  text: '#2A2721',
-  textMuted: '#6E6A5E',
-  green: '#249D8F',       // teal brand (nama variabel dipertahankan agar diff kecil)
-  greenDark: '#17766B',
-  blue: '#B3571F',        // aksen terracotta gelap untuk info/link
-  yellow: '#E9C46A',
-  terra: '#E76F51',
-  cream: '#FDF0D5',
-  chipBg: '#FDF0D5',
-  badgeBg: '#FBEFD2',
-  badgeText: '#9A5312',
-  border: '#EADFC8',
-  error: '#C74A28',
+function palette(mode: 'light' | 'dark') {
+  if (mode === 'dark') {
+    return {
+      bg: '#14201E',
+      text: '#F0EBDF',
+      textMuted: '#A8B5B0',
+      green: '#2FB3A3',       // teal lebih terang utk dark mode
+      greenDark: '#7BD9CE',
+      blue: '#E8845F',
+      yellow: '#E9C46A',
+      terra: '#F08A6C',
+      cream: '#1D2C29',
+      chipBg: '#1D2C29',
+      badgeBg: '#3A2F14',
+      badgeText: '#F2C14E',
+      border: '#2A3B37',
+      error: '#F08A6C',
+    }
+  }
+  return {
+    bg: '#FBF6EC',
+    text: '#2A2721',
+    textMuted: '#6E6A5E',
+    green: '#249D8F',
+    greenDark: '#17766B',
+    blue: '#B3571F',
+    yellow: '#E9C46A',
+    terra: '#E76F51',
+    cream: '#FDF0D5',
+    chipBg: '#FDF0D5',
+    badgeBg: '#FBEFD2',
+    badgeText: '#9A5312',
+    border: '#EADFC8',
+    error: '#C74A28',
+  }
 }
+
+export let colors = palette('light')
+
+export function applyTheme(mode: 'light' | 'dark') {
+  colors = palette(mode)
+}
+

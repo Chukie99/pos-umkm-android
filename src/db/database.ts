@@ -84,6 +84,13 @@ export function initDatabase(): void {
   if (!productCols.includes('stock')) {
     d.execSync('ALTER TABLE products ADD COLUMN stock INTEGER')
   }
+  if (!productCols.includes('image_uri')) {
+    d.execSync('ALTER TABLE products ADD COLUMN image_uri TEXT')
+  }
+  d.execSync(`CREATE TABLE IF NOT EXISTS settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+  )`)
   const txCols = d.getAllSync<{ name: string }>("PRAGMA table_info(transactions)").map((c) => c.name)
   if (!txCols.includes('discount')) {
     d.execSync('ALTER TABLE transactions ADD COLUMN discount INTEGER NOT NULL DEFAULT 0')
