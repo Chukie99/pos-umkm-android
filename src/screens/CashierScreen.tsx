@@ -103,14 +103,64 @@ export default function CashierScreen({ onSold }: { onSold: () => void }) {
     <View style={styles.root}>
       {/* Product grid */}
       <ScrollView contentContainerStyle={styles.grid}>
-        {products.map((p) => (
-          <Pressable key={p.id} style={styles.card} android_ripple={{ color: colors.chipBg }} onPress={() => openProduct(p)}>
-            <Text numberOfLines={2} style={styles.cardName}>{p.name}</Text>
-            <Text style={styles.cardPrice}>{rupiah(p.price)}</Text>
-            {p.category_name ? <Text style={styles.cardCat}>{p.category_name}</Text> : null}
-          </Pressable>
-        ))}
+        {products.length === 0 ? (
+          <Text style={styles.emptyTxt}>Belum ada produk. Tambah dulu di menu Kelola Produk.</Text>
+        ) : null}
+        {products.map((p) => {
+          const inCart = cart.find((l) => l.key.startsWith(`${p.id}::`))
+          return (
+            <Pressable key={p.id} style={[styles.card, inCart && styles.cardActive]} android_ripple={{ color: colors.chipBg }} onPress={() => openProduct(p)}>
+              {inCart ? (
+                <View style={styles.cardBadge}>
+                  <Text style={styles.cardBadgeTxt}>{inCart.qty}</Text>
+                </View>
+              ) : null}
+              {p.stock !== null && p.stock <= 5 ? (
+                <View style={styles.stockTag}>
+                  <Text style={styles.stockTagTxt}>{p.stock <= 0 ? 'Habis' : `${p.stock} sisa`}</Text>
+                </View>
+              ) : null}
+              <Text numberOfLines={2} style={styles.cardName}>{p.name}</Text>
+              <Text style={styles.cardPrice}>{rupiah(p.price)}</Text>
+              {p.category_name ? <Text style={styles.cardCat}>{p.category_name}</Text> : null}
+            </Pressable>
+          )
+        })}
       </ScrollView>
+
+      {/* Cart items panel — list of what's ordered, with qty steppers */}
+      {cart.length > 0 && !showCheckout ? (
+        <Surface style={styles.cartPanel} elevation={0}>
+          <View style={styles.cartHead}>
+            <Text style={styles.cartTitle}>🧺 Pesanan</Text>
+            <Pressable onPress={() => setCart([])} hitSlop={8}>
+              <Text style={styles.cartClear}>Kosongkan</Text>
+            </Pressable>
+          </View>
+          <ScrollView style={{ maxHeight: 210 }}>
+            {cart.map((l) => (
+              <View key={l.key} style={styles.cartRow}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.cartName} numberOfLines={1}>{l.productName}</Text>
+                  {l.modifiers.length > 0 ? (
+                    <Text style={styles.cartMods} numberOfLines={1}>{l.modifiers.map((m) => m.label).join(', ')}</Text>
+                  ) : null}
+                  <Text style={styles.cartPrice}>{rupiah(l.unitPrice * l.qty)}</Text>
+                </View>
+                <View style={styles.stepper}>
+                  <Pressable onPress={() => bumpQty(l.key, -1)} style={styles.stepBtn} android_ripple={{ color: colors.chipBg, borderless: true }}>
+                    <Text style={styles.stepTxt}>−</Text>
+                  </Pressable>
+                  <Text style={styles.stepQty}>{l.qty}</Text>
+                  <Pressable onPress={() => bumpQty(l.key, +1)} style={styles.stepBtn} android_ripple={{ color: colors.chipBg, borderless: true }}>
+                    <Text style={styles.stepTxt}>+</Text>
+                  </Pressable>
+                </View>
+              </View>
+            ))}
+          </ScrollView>
+        </Surface>
+      ) : null}
 
       <StickyCartBar visible cart={cart} total={total} onCheckout={() => setShowCheckout(true)} />
 
@@ -190,6 +240,38 @@ const styles = StyleSheet.create({
   cardName: { fontSize: 17, fontWeight: '800', color: colors.text, lineHeight: 22 },
   cardPrice: { fontSize: 15, fontWeight: '700', color: colors.greenDark, marginTop: 6 },
   cardCat: { fontSize: 11, color: colors.textMuted, marginTop: 4 },
+  emptyTxt: { color: colors.textMuted, fontSize: 14, textAlign: 'center', marginTop: 40 },
+  cardActive: { borderColor: colors.green, borderWidth: 2, backgroundColor: colors.chipBg },
+  cardBadge: {
+    position: 'absolute', top: -8, right: -8,
+    minWidth: 26, height: 26, borderRadius: 13,
+    backgroundColor: colors.green, alignItems: 'center', justifyContent: 'center',
+    paddingHorizontal: 7, zIndex: 2,
+  },
+  cardBadgeTxt: { color: '#FFF', fontWeight: '900', fontSize: 13 },
+  stockTag: {
+    position: 'absolute', top: 6, left: 6,
+    backgroundColor: colors.terra, borderRadius: 6, paddingHorizontal: 5, paddingVertical: 1, zIndex: 1,
+  },
+  stockTagTxt: { color: '#FFF', fontSize: 9, fontWeight: '800' },
+  cartPanel: {
+    position: 'absolute', left: 12, right: 12, bottom: 88,
+    backgroundColor: '#FFFFFF', borderRadius: 18,
+    borderWidth: 1, borderColor: colors.border,
+    paddingVertical: 12, paddingHorizontal: 16,
+    shadowColor: '#0E4A43', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.12, shadowRadius: 10, elevation: 6,
+  },
+  cartHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
+  cartTitle: { fontSize: 14, fontWeight: '900', color: colors.text },
+  cartClear: { fontSize: 12, color: colors.terra, fontWeight: '700' },
+  cartRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 7, borderBottomWidth: 1, borderBottomColor: colors.border },
+  cartName: { fontSize: 14, fontWeight: '700', color: colors.text },
+  cartMods: { fontSize: 11, color: colors.textMuted, marginTop: 1 },
+  cartPrice: { fontSize: 12.5, fontWeight: '800', color: colors.greenDark, marginTop: 2 },
+  stepper: { flexDirection: 'row', alignItems: 'center', gap: 2, backgroundColor: colors.chipBg, borderRadius: 999, overflow: 'hidden' },
+  stepBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
+  stepTxt: { fontSize: 20, fontWeight: '900', color: colors.greenDark, lineHeight: 24 },
+  stepQty: { minWidth: 30, textAlign: 'center', fontSize: 15, fontWeight: '900', color: colors.text },
   sheet: { backgroundColor: '#FFF', margin: 18, borderRadius: 20, padding: 22 },
   sheetTitle: { fontWeight: '800', color: colors.text },
   sheetPrice: { fontSize: 18, fontWeight: '800', color: colors.greenDark, marginBottom: 16 },

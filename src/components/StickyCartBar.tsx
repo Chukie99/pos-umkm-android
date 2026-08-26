@@ -1,6 +1,6 @@
-import React from 'react'
-import { View, StyleSheet, Pressable } from 'react-native'
-import { Text, Surface } from 'react-native-paper'
+import React, { useEffect, useRef } from 'react'
+import { View, StyleSheet, Pressable, Animated } from 'react-native'
+import { Text } from 'react-native-paper'
 import { colors } from '../theme/theme'
 import type { CartLine } from '../utils/pos'
 
@@ -14,59 +14,94 @@ interface Props {
 export const rupiah = (n: number) => 'Rp ' + Math.round(n).toLocaleString('id-ID')
 
 /**
- * Floating sticky bottom bar — thumb-friendly one-handed checkout.
- * Total on the left, big green Bayar button on the right.
+ * Modern floating cart bar — dark teal pill with slide-up animation.
+ * Left: item count + total. Right: prominent "Bayar" button.
  */
 export default function StickyCartBar({ visible, cart, total, onCheckout }: Props) {
-  if (!visible || cart.length === 0) return null
+  const anim = useRef(new Animated.Value(0)).current
+
+  useEffect(() => {
+    Animated.spring(anim, {
+      toValue: visible && cart.length > 0 ? 1 : 0,
+      useNativeDriver: true,
+      friction: 8,
+      tension: 60,
+    }).start()
+  }, [visible, cart.length])
+
+  if (!visible) return null
   const itemCount = cart.reduce((s, l) => s + l.qty, 0)
+  if (itemCount === 0) return null
 
   return (
-    <Surface style={styles.bar} elevation={0}>
-      <View style={{ flex: 1 }}>
-        <Text style={styles.itemCount}>{itemCount} item</Text>
-        <Text variant="titleLarge" style={styles.total}>{rupiah(total)}</Text>
-        <Text numberOfLines={1} style={styles.preview}>
-          {cart.map((l) => `${l.qty}× ${l.productName}`).join(', ')}
-        </Text>
-      </View>
-      <Pressable
-        onPress={onCheckout}
-        android_ripple={{ color: 'rgba(255,255,255,0.25)' }}
-        style={styles.payBtn}
-      >
-        <Text style={styles.payBtnText}>BAYAR</Text>
+    <Animated.View
+      style={[
+        styles.wrap,
+        { transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [120, 0] }) }] },
+      ]}
+      pointerEvents="box-none"
+    >
+      <Pressable style={styles.bar} onPress={onCheckout} android_ripple={{ color: 'rgba(255,255,255,0.12)' }}>
+        {/* Item count badge */}
+        <View style={styles.badge}>
+          <Text style={styles.badgeTxt}>{itemCount}</Text>
+        </View>
+
+        <View style={styles.info}>
+          <Text style={styles.total}>{rupiah(total)}</Text>
+          <Text numberOfLines={1} style={styles.preview}>
+            Lihat pesanan ({cart.length} jenis)
+          </Text>
+        </View>
+
+        <View style={styles.payBtn}>
+          <Text style={styles.payBtnText}>Bayar ›</Text>
+        </View>
       </Pressable>
-    </Surface>
+    </Animated.View>
   )
 }
 
 const styles = StyleSheet.create({
-  bar: {
+  wrap: {
     position: 'absolute',
-    left: 12,
-    right: 12,
-    bottom: 12,
+    left: 14,
+    right: 14,
+    bottom: 16,
+  },
+  bar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
+    backgroundColor: colors.greenDark,
+    borderRadius: 20,
+    paddingVertical: 12,
+    paddingLeft: 14,
+    paddingRight: 6,
     gap: 12,
+    shadowColor: '#0E4A43',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 8,
   },
-  itemCount: { fontSize: 12, color: colors.textMuted },
-  total: { fontWeight: '800', color: colors.text, marginTop: -2 },
-  preview: { fontSize: 11, color: colors.textMuted },
-  payBtn: {
-    backgroundColor: colors.green,
-    minWidth: 132,
-    height: 56,
-    borderRadius: 14,
+  badge: {
+    minWidth: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: colors.yellow,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 6,
   },
-  payBtnText: { color: '#FFFFFF', fontSize: 18, fontWeight: '800', letterSpacing: 1 },
+  badgeTxt: { color: '#4A3405', fontWeight: '900', fontSize: 15 },
+  info: { flex: 1 },
+  total: { color: '#FFFFFF', fontSize: 19, fontWeight: '900', letterSpacing: 0.3 },
+  preview: { color: '#BFE3DE', fontSize: 11.5, marginTop: 1 },
+  payBtn: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 15,
+    paddingVertical: 13,
+    paddingHorizontal: 22,
+  },
+  payBtnText: { color: colors.greenDark, fontSize: 16, fontWeight: '900', letterSpacing: 0.5 },
 })
