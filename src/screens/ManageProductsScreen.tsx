@@ -9,8 +9,8 @@ import {
 
 const rupiah = (n: number) => 'Rp ' + Math.round(n).toLocaleString('id-ID')
 
-interface EditingState { id: number | null; name: string; price: string; categoryId: number | null }
-const EMPTY_EDIT: EditingState = { id: null, name: '', price: '', categoryId: null }
+interface EditingState { id: number | null; name: string; price: string; stock: string; categoryId: number | null }
+const EMPTY_EDIT: EditingState = { id: null, name: '', price: '', stock: '', categoryId: null }
 
 export default function ManageProductsScreen() {
   const [products, setProducts] = useState<ProductRow[]>(() => listAllProducts())
@@ -24,15 +24,16 @@ export default function ManageProductsScreen() {
   const openAdd = () => setEditing({ ...EMPTY_EDIT })
 
   const openEdit = (p: ProductRow) =>
-    setEditing({ id: p.id, name: p.name, price: String(p.price), categoryId: p.category_id })
+    setEditing({ id: p.id, name: p.name, price: String(p.price), stock: p.stock === null ? '' : String(p.stock), categoryId: p.category_id })
 
   const save = () => {
     if (!editing) return
+    const stockVal = editing.stock.trim() === '' ? null : Number(editing.stock.replace(/\D/g, ''))
     try {
       if (editing.id === null) {
-        addProduct(editing.name, Number(editing.price.replace(/\D/g, '')), editing.categoryId)
+        addProduct(editing.name, Number(editing.price.replace(/\D/g, '')), editing.categoryId, stockVal)
       } else {
-        updateProduct(editing.id, editing.name, Number(editing.price.replace(/\D/g, '')), editing.categoryId)
+        updateProduct(editing.id, editing.name, Number(editing.price.replace(/\D/g, '')), editing.categoryId, stockVal)
       }
       setEditing(null)
       refresh()
@@ -99,6 +100,11 @@ export default function ManageProductsScreen() {
             <Pressable style={{ flex: 1 }} onPress={() => openEdit(p)}>
               <Text style={styles.name}>{p.name}</Text>
               <Text style={styles.price}>{rupiah(p.price)}{p.category_name ? `  •  ${p.category_name}` : ''}</Text>
+              {p.stock !== null && (
+                <Text style={[styles.stockTxt, p.stock <= 5 && styles.stockLow]}>
+                  {p.stock <= 0 ? 'Stok habis' : `Stok: ${p.stock}`}
+                </Text>
+              )}
               {!p.is_active && <Text style={styles.inactive}>Nonaktif</Text>}
             </Pressable>
             <Switch
@@ -131,6 +137,12 @@ export default function ManageProductsScreen() {
               keyboardType="number-pad"
               left={<TextInput.Affix text="Rp " />}
               style={{ backgroundColor: '#FFF' }} placeholder="15000" />
+
+            <Text style={styles.label}>Stok (opsional)</Text>
+            <TextInput value={editing.stock}
+              onChangeText={(v) => setEditing({ ...editing, stock: v.replace(/\D/g, '') })}
+              keyboardType="number-pad"
+              style={{ backgroundColor: '#FFF' }} placeholder="Kosongkan jika tidak ingin dilacak" />
 
             <Text style={styles.label}>Kategori</Text>
             <View style={styles.chips}>
@@ -174,6 +186,8 @@ const styles = StyleSheet.create({
   name: { fontSize: 15, fontWeight: '700', color: colors.text },
   price: { fontSize: 13, color: colors.greenDark, marginTop: 2 },
   inactive: { fontSize: 11, color: colors.error, marginTop: 2 },
+  stockTxt: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
+  stockLow: { color: colors.terra, fontWeight: '700' },
   del: { fontSize: 18 },
   modal: { backgroundColor: '#FFF', margin: 20, borderRadius: 20, padding: 22 },
   modalTitle: { fontWeight: '800', color: colors.text, marginBottom: 16 },

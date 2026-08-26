@@ -2,15 +2,15 @@
   "expo": {
     "name": "POS UMKM",
     "slug": "pos-umkm-android",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "android": {
       "package": "com.chukie99.posumkm",
-      "versionCode": 2,
+      "versionCode": 3,
       "adaptiveIcon": {
-        "backgroundColor": "#2E7D32",
+        "backgroundColor": "#249D8F",
         "foregroundImage": "./assets/android-icon-foreground.png"
       }
     },

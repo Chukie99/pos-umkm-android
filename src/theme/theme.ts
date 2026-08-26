@@ -2,47 +2,54 @@ import React from 'react'
 import { MD3LightTheme, configureFonts } from 'react-native-paper'
 
 /**
- * High-contrast Material Design 3 theme.
- * Deliberately flat: no neon gradients, no heavy shadows.
- * Primary green #2E7D32 is reserved strictly for primary actions
- * (Bayar / Checkout) so the thumb always lands on the right button.
+ * Palet brand POS UMKM:
+ *   teal   #249D8F — aksi utama / brand
+ *   kuning #E9C46A — aksen, highlight, badge
+ *   terracotta #E76F51 — error / warning / harga
+ *   krem   #FDF0D5 — latar lembut, chip
+ *
+ * Primary teal dipakai ketat untuk tombol utama (Bayar/Checkout)
+ * supaya jempol selalu mendarat di tombol yang benar.
  */
 export const theme = {
   ...MD3LightTheme,
   colors: {
     ...MD3LightTheme.colors,
-    background: '#F5F5F5',
+    background: '#FBF6EC',
     surface: '#FFFFFF',
-    surfaceVariant: '#EDEBE9',
-    primary: '#2E7D32',
+    surfaceVariant: '#FDF0D5',
+    primary: '#249D8F',
     onPrimary: '#FFFFFF',
-    primaryContainer: '#C8E6C9',
-    onPrimaryContainer: '#0B3D0E',
-    secondary: '#1C1B1F',
+    primaryContainer: '#CDEAE6',
+    onPrimaryContainer: '#0E4A43',
+    secondary: '#2A2721',
     onSecondary: '#FFFFFF',
-    secondaryContainer: '#E0E0E0',
-    onSecondaryContainer: '#1C1B1F',
-    tertiary: '#1565C0',
-    error: '#B3261E',
+    secondaryContainer: '#FDF0D5',
+    onSecondaryContainer: '#2A2721',
+    tertiary: '#B3571F',
+    error: '#C74A28',
     onError: '#FFFFFF',
-    errorContainer: '#F9DEDC',
-    onErrorContainer: '#410E0B',
-    outline: '#79747E',
-    outlineVariant: '#DEDEDE',
+    errorContainer: '#FBE0D8',
+    onErrorContainer: '#5C1A08',
+    outline: '#8A8578',
+    outlineVariant: '#EADFC8',
   },
   fonts: configureFonts({ config: { fontFamily: 'Roboto' } }),
 }
 
 export const colors = {
-  bg: '#F5F5F5',
-  text: '#1C1B1F',
-  textMuted: '#5F5E58',
-  green: '#2E7D32',
-  greenDark: '#1B5E20',
-  blue: '#1565C0',
-  chipBg: '#E8F5E9',
-  badgeBg: '#FFF3E0',
-  badgeText: '#BF360C',
-  border: '#DEDEDE',
-  error: '#B3261E',
+  bg: '#FBF6EC',          // latar hangat (turunan krem)
+  text: '#2A2721',
+  textMuted: '#6E6A5E',
+  green: '#249D8F',       // teal brand (nama variabel dipertahankan agar diff kecil)
+  greenDark: '#17766B',
+  blue: '#B3571F',        // aksen terracotta gelap untuk info/link
+  yellow: '#E9C46A',
+  terra: '#E76F51',
+  cream: '#FDF0D5',
+  chipBg: '#FDF0D5',
+  badgeBg: '#FBEFD2',
+  badgeText: '#9A5312',
+  border: '#EADFC8',
+  error: '#C74A28',
 }

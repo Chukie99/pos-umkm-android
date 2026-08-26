@@ -53,7 +53,7 @@
  */
 
 // ====== CONFIG ======
-const APP_LICENSE_SECRET = 'UMKM-POS-2026::v1::Chukie99'; // ← GANTI! samakan dgn app
+const APP_LICENSE_SECRET = '5E175D6EBE1E6E0FA1F068A59308898E090239DFFC59E2C4'; // ← GANTI! samakan dgn app
 const PROCESSED_COLUMN = 8; // kolom H = penanda sudah diproses
 const SUPPORT_EMAIL = Session.getEffectiveUser().getEmail();
 // ====================

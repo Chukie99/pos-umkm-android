@@ -6,7 +6,7 @@ import { listProducts, listModifierGroups, cartTotals, checkout, type Product, t
 import StickyCartBar, { rupiah } from '../components/StickyCartBar'
 import ModifierSheet from '../components/ModifierSheet'
 import CheckoutSheet from '../components/CheckoutSheet'
-import { buildReceiptText } from '../utils/receipt'
+import { buildReceiptText, printReceipt } from '../utils/receipt'
 import { shareReceipt } from '../utils/export'
 
 export default function CashierScreen({ onSold }: { onSold: () => void }) {
@@ -86,8 +86,8 @@ export default function CashierScreen({ onSold }: { onSold: () => void }) {
     )
   }
 
-  const doCheckout = (method: 'cash' | 'qris', paid: number) => {
-    const res = checkout(cart, method, paid)
+  const doCheckout = (method: 'cash' | 'qris', paid: number, discount: number) => {
+    const res = checkout(cart, method, paid, discount)
     setCart([])
     setShowCheckout(false)
     setLastSale(`${res.invoice} • Kembalian ${method === 'cash' ? rupiah(res.change) : '—'}`)
@@ -155,6 +155,17 @@ export default function CashierScreen({ onSold }: { onSold: () => void }) {
               <Text style={styles.shareTxt}>📤 Kirim Struk</Text>
             </Pressable>
           ) : null}
+          {lastTxId ? (
+            <Pressable
+              onPress={async () => {
+                try { await printReceipt(lastTxId) } catch {}
+              }}
+              android_ripple={{ color: colors.chipBg }}
+              style={styles.printBtn}
+            >
+              <Text style={styles.shareTxt}>🖨️ Cetak</Text>
+            </Pressable>
+          ) : null}
         </Surface>
       ) : null}
     </View>
@@ -182,7 +193,7 @@ const styles = StyleSheet.create({
   sheet: { backgroundColor: '#FFF', margin: 18, borderRadius: 20, padding: 22 },
   sheetTitle: { fontWeight: '800', color: colors.text },
   sheetPrice: { fontSize: 18, fontWeight: '800', color: colors.greenDark, marginBottom: 16 },
-  noMod: { backgroundColor: '#FAFAFA', borderRadius: 12, padding: 16, alignItems: 'center' },
+  noMod: { backgroundColor: '#FDF0D5', borderRadius: 12, padding: 16, alignItems: 'center' },
   addPlainBtn: { marginTop: 12, alignItems: 'center', paddingVertical: 8 },
   addPlainTxt: { color: colors.blue, fontWeight: '700' },
   toast: {
@@ -193,6 +204,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 12,
   },
   shareBtn: { backgroundColor: '#FFF', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
+  printBtn: { backgroundColor: colors.cream, borderRadius: 10, paddingVertical: 10, paddingHorizontal: 14, borderWidth: 1, borderColor: colors.yellow },
   shareTxt: { color: colors.greenDark, fontWeight: '700', fontSize: 12 },
   toastText: { color: colors.greenDark, fontWeight: '700', fontSize: 13 },
 })

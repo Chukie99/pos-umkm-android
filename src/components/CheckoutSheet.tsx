@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react'
 import { View, StyleSheet, Pressable, ScrollView } from 'react-native'
-import { Text, Surface, Modal, Button, SegmentedButtons } from 'react-native-paper'
+import { Text, Surface, Modal, Button, SegmentedButtons, TextInput } from 'react-native-paper'
 import { colors } from '../theme/theme'
 import type { CartLine } from '../utils/pos'
 import { rupiah } from '../components/StickyCartBar'
@@ -9,7 +9,7 @@ interface Props {
   visible: boolean
   cart: CartLine[]
   onClose: () => void
-  onConfirm: (method: 'cash' | 'qris', paid: number) => void
+  onConfirm: (method: 'cash' | 'qris', paid: number, discount: number) => void
 }
 
 const QUICK_CASH = [20000, 50000, 100000]
@@ -17,21 +17,59 @@ const QUICK_CASH = [20000, 50000, 100000]
 export default function CheckoutSheet({ visible, cart, onClose, onConfirm }: Props) {
   const [method, setMethod] = React.useState<'cash' | 'qris'>('cash')
   const [paidStr, setPaidStr] = React.useState('')
-  const total = cart.reduce((s, l) => s + l.unitPrice * l.qty, 0)
+  const [discMode, setDiscMode] = React.useState<'none' | 'rp' | 'pct'>('none')
+  const [discVal, setDiscVal] = React.useState('')
+  const subtotal = cart.reduce((s, l) => s + l.unitPrice * l.qty, 0)
+  const discount =
+    discMode === 'rp'
+      ? Math.min(subtotal, parseInt(discVal.replace(/\D/g, '') || '0', 10))
+      : discMode === 'pct'
+        ? Math.floor((subtotal * Math.min(100, parseInt(discVal.replace(/\D/g, '') || '0', 10))) / 100)
+        : 0
+  const total = Math.max(0, subtotal - discount)
   const paid = method === 'qris' ? total : parseInt(paidStr.replace(/\D/g, '') || '0', 10)
   const change = Math.max(0, paid - total)
   const enough = method === 'qris' || paid >= total
 
-  const reset = () => { setPaidStr(''); setMethod('cash') }
+  const reset = () => { setPaidStr(''); setMethod('cash'); setDiscMode('none'); setDiscVal('') }
 
   return (
     <Modal visible={visible} onDismiss={onClose} contentContainerStyle={styles.modal}>
       <Text variant="titleLarge" style={styles.title}>Pembayaran</Text>
 
       <View style={styles.totalRow}>
-        <Text style={styles.totalLabel}>Total Tagihan</Text>
-        <Text style={styles.totalValue}>{rupiah(total)}</Text>
+        <Text style={styles.totalLabel}>Subtotal</Text>
+        <Text style={styles.totalValue}>{rupiah(subtotal)}</Text>
       </View>
+
+      {/* Diskon */}
+      <Text style={styles.label}>Diskon</Text>
+      <View style={styles.discRow}>
+        {(['none', 'rp', 'pct'] as const).map((m) => (
+          <Button
+            key={m}
+            mode={discMode === m ? 'contained' : 'outlined'}
+            compact
+            onPress={() => { setDiscMode(m); if (m === 'none') setDiscVal('') }}
+            style={styles.discBtn}
+          >
+            {m === 'none' ? 'Tanpa' : m === 'rp' ? 'Rp' : '%'}
+          </Button>
+        ))}
+        {discMode !== 'none' ? (
+          <TextInput
+            value={discVal}
+            onChangeText={(v) => setDiscVal(v.replace(/\D/g, ''))}
+            keyboardType="number-pad"
+            dense
+            style={styles.discInput}
+            placeholder={discMode === 'rp' ? '5000' : '10'}
+          />
+        ) : null}
+      </View>
+      {discount > 0 ? (
+        <Text style={styles.discApplied}>Diskon −{rupiah(discount)} → Total {rupiah(total)}</Text>
+      ) : null}
 
       <SegmentedButtons
         value={method}
@@ -75,7 +113,7 @@ export default function CheckoutSheet({ visible, cart, onClose, onConfirm }: Pro
       <Button
         mode="contained"
         disabled={!enough || cart.length === 0}
-        onPress={() => { onConfirm(method, paid); reset() }}
+        onPress={() => { onConfirm(method, paid, discount); reset() }}
         contentStyle={styles.confirmBtn}
       >
         Konfirmasi & Selesai
@@ -104,6 +142,10 @@ const styles = StyleSheet.create({
   paidText: { fontSize: 28, fontWeight: '800', color: colors.text },
   paidBad: { color: colors.error },
   quickRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 },
+  discRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
+  discBtn: { flex: 1 },
+  discInput: { flex: 2, backgroundColor: '#FFF', height: 40 },
+  discApplied: { color: colors.terra, fontWeight: '700', fontSize: 13, marginBottom: 6 },
   quickBtn: { borderColor: colors.border },
   qrisBox: { backgroundColor: colors.chipBg, borderRadius: 12, padding: 16 },
   qrisText: { color: colors.greenDark, fontSize: 14, lineHeight: 20 },

@@ -24,7 +24,7 @@
  */
 
 // ====== CONFIG ======
-const APP_LICENSE_SECRET = 'UMKM-POS-2026::v1::Chukie99'; // ← GANTI & samakan dengan app!
+const APP_LICENSE_SECRET = '5E175D6EBE1E6E0FA1F068A59308898E090239DFFC59E2C4'; // ← GANTI & samakan dengan app!
 const SEARCH_QUERY = 'is:inbox -label:license-done newer_than:2d'; // label penanda sudah diproses
 const PROCESSED_LABEL = 'license-done';
 // ====================

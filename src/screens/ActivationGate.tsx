@@ -1,7 +1,8 @@
 import React from 'react'
-import { View, StyleSheet, TextInput, Pressable } from 'react-native'
+import { View, StyleSheet, TextInput, Pressable, Linking } from 'react-native'
 import { Text, Surface } from 'react-native-paper'
 import { colors } from '../theme/theme'
+import { VENDOR_WA } from '../license/license'
 
 /**
  * High-contrast license gate.
@@ -32,6 +33,17 @@ export default function ActivationGate({ deviceCode, onActivate }: { deviceCode:
           Kirim kode di atas ke penjual untuk mendapatkan Kode Aktivasi Anda.
         </Text>
 
+        <Pressable
+          onPress={() => {
+            const msg = encodeURIComponent(`Halo, saya mau minta Kode Aktivasi POS UMKM.\nDevice ID saya: ${deviceCode}`)
+            Linking.openURL(`https://wa.me/${VENDOR_WA}?text=${msg}`)
+          }}
+          android_ripple={{ color: 'rgba(255,255,255,0.2)' }}
+          style={styles.waBtn}
+        >
+          <Text style={styles.waBtnText}>💬 MINTA KODE VIA WHATSAPP</Text>
+        </Pressable>
+
         <Text style={[styles.sectionLabel, { marginTop: 22 }]}>Kode Aktivasi</Text>
         <TextInput
           ref={inputRef}
@@ -39,7 +51,7 @@ export default function ActivationGate({ deviceCode, onActivate }: { deviceCode:
           onChangeText={(v) => { setKey(v.toUpperCase()); setError('') }}
           onSubmitEditing={submit}
           placeholder="XXXX-XXXX-XXXX-XXXX"
-          placeholderTextColor="#B9B7B0"
+          placeholderTextColor="#C9BFA8"
           autoCapitalize="characters"
           autoCorrect={false}
           autoComplete="off"
@@ -74,8 +86,10 @@ const styles = StyleSheet.create({
   deviceBox: { backgroundColor: colors.chipBg, borderRadius: 12, borderWidth: 1, borderColor: colors.green, alignItems: 'center', paddingVertical: 16 },
   deviceCode: { fontSize: 24, fontWeight: '900', color: colors.greenDark, letterSpacing: 3 },
   helpText: { fontSize: 13, color: colors.textMuted, marginTop: 10, lineHeight: 18 },
+  waBtn: { backgroundColor: '#25D366', borderRadius: 12, height: 50, alignItems: 'center', justifyContent: 'center', marginTop: 14 },
+  waBtnText: { color: '#FFF', fontWeight: '800', fontSize: 15, letterSpacing: 0.5 },
   inputBox: {
-    backgroundColor: '#FAFAFA',
+    backgroundColor: '#FDF0D5',
     borderRadius: 12,
     borderWidth: 1,
     borderColor: colors.border,
@@ -93,6 +107,6 @@ const styles = StyleSheet.create({
   activateBtn: { backgroundColor: colors.green, borderRadius: 12, height: 56, alignItems: 'center', justifyContent: 'center', marginTop: 18 },
   activateBtnText: { color: '#FFF', fontWeight: '800', fontSize: 17, letterSpacing: 1.5 },
   focusHelper: { alignItems: 'center', marginTop: 14 },
-  focusHelperText: { fontSize: 11, color: '#B9B7B0' },
+  focusHelperText: { fontSize: 11, color: '#C9BFA8' },
   footer: { marginTop: 20, fontSize: 12, color: colors.textMuted },
 })

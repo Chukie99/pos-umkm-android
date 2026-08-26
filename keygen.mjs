@@ -14,16 +14,16 @@
 import { createHmac } from 'node:crypto'
 
 // HARUS sama persis dengan APP_LICENSE_SECRET di src/license/license.ts
-const APP_LICENSE_SECRET = 'UMKM-POS-2026::v1::Chukie99'
+const APP_LICENSE_SECRET = '5E175D6EBE1E6E0FA1F068A59308898E090239DFFC59E2C4'
 
-const BASE32_ALPHABET = '23456789ABCDEFGHJKMNPQRSTUVWXYZ'
+const BASE32_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ'
 
 function bytesToBase32(bytes) {
   let bits = 0
   let value = 0
   let output = ''
   for (const byte of bytes) {
-    value = (value << 8) | byte
+    value = ((value & ((1 << bits) - 1)) << 8 | byte) >>> 0 // mask selalu: buang semua bit lama (aman 32-bit)
     bits += 8
     while (bits >= 5) {
       output += BASE32_ALPHABET[(value >>> (bits - 5)) & 31]

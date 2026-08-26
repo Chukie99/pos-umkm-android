@@ -2,13 +2,13 @@
 // Run: node test-license.mjs
 import { createHmac } from 'node:crypto'
 
-const APP_LICENSE_SECRET = 'UMKM-POS-2026::v1::Chukie99'
-const BASE32_ALPHABET = '23456789ABCDEFGHJKMNPQRSTUVWXYZ'
+const APP_LICENSE_SECRET = '5E175D6EBE1E6E0FA1F068A59308898E090239DFFC59E2C4'
+const BASE32_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ'
 
 function bytesToBase32(bytes) {
   let bits = 0, value = 0, out = ''
   for (const b of bytes) {
-    value = (value << 8) | b
+    value = ((value & ((1 << bits) - 1)) << 8 | b) >>> 0 // mask selalu: buang semua bit lama (aman 32-bit)
     bits += 8
     while (bits >= 5) { out += BASE32_ALPHABET[(value >>> (bits - 5)) & 31]; bits -= 5 }
   }

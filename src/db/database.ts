@@ -35,6 +35,9 @@ export function initDatabase(): void {
       is_active INTEGER NOT NULL DEFAULT 1
     );
 
+    -- Migration v1.2: stok (NULL = tidak dilacak) & diskon transaksi
+    -- (ALTER guarded di bawah karena SQLite tidak punya IF NOT EXISTS untuk ADD COLUMN)
+
     -- Modifier groups: "Varian", "Topping", "Level Pedas", "Suhu" etc.
     CREATE TABLE IF NOT EXISTS modifier_groups (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -75,6 +78,16 @@ export function initDatabase(): void {
     CREATE INDEX IF NOT EXISTS idx_items_tx ON transaction_items(transaction_id);
     CREATE INDEX IF NOT EXISTS idx_mod_groups_product ON modifier_groups(product_id);
   `)
+
+  // Guarded column migrations
+  const productCols = d.getAllSync<{ name: string }>("PRAGMA table_info(products)").map((c) => c.name)
+  if (!productCols.includes('stock')) {
+    d.execSync('ALTER TABLE products ADD COLUMN stock INTEGER')
+  }
+  const txCols = d.getAllSync<{ name: string }>("PRAGMA table_info(transactions)").map((c) => c.name)
+  if (!txCols.includes('discount')) {
+    d.execSync('ALTER TABLE transactions ADD COLUMN discount INTEGER NOT NULL DEFAULT 0')
+  }
 }
 
 export function seedDemoData(): void {

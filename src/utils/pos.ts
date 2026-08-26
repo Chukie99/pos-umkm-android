@@ -4,6 +4,7 @@ export interface Product {
   id: number
   name: string
   price: number
+  stock: number | null
   category_name: string | null
 }
 
@@ -29,7 +30,7 @@ export interface CartLine {
 export function listProducts(): Product[] {
   return getDb()
     .getAllSync<Product>(
-      `SELECT p.id, p.name, p.price, c.name AS category_name
+      `SELECT p.id, p.name, p.price, p.stock, c.name AS category_name
        FROM products p LEFT JOIN categories c ON c.id = p.category_id
        WHERE p.is_active = 1 ORDER BY p.name`
     )
@@ -54,10 +55,11 @@ export function lineUnitPrice(basePrice: number, mods: CartLine['modifiers']): n
   return basePrice + mods.reduce((s, m) => s + m.extra_price, 0)
 }
 
-export function cartTotals(cart: CartLine[]) {
-  const total = cart.reduce((s, l) => s + l.unitPrice * l.qty, 0)
+export function cartTotals(cart: CartLine[], discount = 0) {
+  const subtotal = cart.reduce((s, l) => s + l.unitPrice * l.qty, 0)
+  const total = Math.max(0, subtotal - discount)
   const itemCount = cart.reduce((s, l) => s + l.qty, 0)
-  return { total, itemCount }
+  return { subtotal, total, itemCount }
 }
 
 function nextInvoice(): string {
@@ -75,10 +77,11 @@ function nextInvoice(): string {
 export function checkout(
   cart: CartLine[],
   paymentMethod: 'cash' | 'qris',
-  paid: number
+  paid: number,
+  discount = 0
 ): { invoice: string; total: number; change: number } {
   if (cart.length === 0) throw new Error('Keranjang masih kosong')
-  const total = cartTotals(cart).total
+  const { total } = cartTotals(cart, discount)
   if (paymentMethod === 'cash' && paid < total) throw new Error('Uang bayar kurang dari total')
   const effectivePaid = paymentMethod === 'qris' ? total : paid
   const change = effectivePaid - total
@@ -90,16 +93,19 @@ export function checkout(
     const txId = Number(
       db
         .prepareSync(
-          'INSERT INTO transactions (invoice, total, paid, change, payment_method) VALUES (?, ?, ?, ?, ?)'
+          'INSERT INTO transactions (invoice, total, paid, change, payment_method, discount) VALUES (?, ?, ?, ?, ?, ?)'
         )
-        .executeSync(invoice, total, effectivePaid, change, paymentMethod).lastInsertRowId
+        .executeSync(invoice, total, effectivePaid, change, paymentMethod, discount).lastInsertRowId
     )
     const insItem = db.prepareSync(
       'INSERT INTO transaction_items (transaction_id, product_name, unit_price, qty, modifiers_label, line_total) VALUES (?, ?, ?, ?, ?, ?)'
     )
+    // Kurangi stok produk yang dilacak (stock NOT NULL)
+    const decStock = db.prepareSync('UPDATE products SET stock = stock - ? WHERE id = ? AND stock IS NOT NULL')
     for (const line of cart) {
       const modLabel = line.modifiers.map((m) => m.label).join(', ')
       insItem.executeSync(txId, line.productName, line.unitPrice, line.qty, modLabel, line.unitPrice * line.qty)
+      if (line.productId > 0) decStock.executeSync(line.qty, line.productId)
     }
     db.execSync('COMMIT')
   } catch (e) {
@@ -107,4 +113,16 @@ export function checkout(
     throw e
   }
   return { invoice, total, change }
+}
+
+/** Produk dengan stok menipis (<= threshold), hanya yang dilacak. */
+export function lowStockProducts(threshold = 5): Product[] {
+  return getDb()
+    .getAllSync<Product>(
+      `SELECT p.id, p.name, p.price, p.stock, c.name AS category_name
+       FROM products p LEFT JOIN categories c ON c.id = p.category_id
+       WHERE p.is_active = 1 AND p.stock IS NOT NULL AND p.stock <= ?
+       ORDER BY p.stock ASC`,
+      [threshold]
+    )
 }
