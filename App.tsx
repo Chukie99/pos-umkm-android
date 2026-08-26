@@ -10,8 +10,10 @@ import { getDeviceId, formatDeviceCode, isActivated, activate } from './src/lice
 import ActivationGate from './src/screens/ActivationGate'
 import CashierScreen from './src/screens/CashierScreen'
 import HistoryScreen from './src/screens/HistoryScreen'
+import ManageProductsScreen from './src/screens/ManageProductsScreen'
+import SettingsScreen from './src/screens/SettingsScreen'
 
-type Tab = 'kasir' | 'riwayat'
+type Tab = 'kasir' | 'produk' | 'riwayat' | 'pengaturan'
 
 export default function App() {
   const [ready, setReady] = useState(false)
@@ -47,17 +49,19 @@ export default function App() {
           <View style={{ flex: 1, backgroundColor: '#F5F5F5' }}>
             <Appbar.Header elevated={false} style={{ backgroundColor: '#FFFFFF' }}>
               <Appbar.Content
-                title={tab === 'kasir' ? 'POS UMKM — Kasir' : 'Laporan & Riwayat'}
+                title={tab === 'kasir' ? 'POS UMKM — Kasir'
+                     : tab === 'produk' ? 'Kelola Produk & Menu'
+                     : tab === 'pengaturan' ? 'Pengaturan & Backup'
+                     : 'Laporan & Riwayat'}
                 titleStyle={{ fontWeight: '800', color: '#1C1B1F', fontSize: 19 }}
               />
             </Appbar.Header>
 
             <View style={{ flex: 1 }}>
-              {tab === 'kasir' ? (
-                <CashierScreen onSold={() => setRefreshKey((k) => k + 1)} />
-              ) : (
-                <HistoryScreen key={refreshKey} />
-              )}
+              {tab === 'kasir' && <CashierScreen onSold={() => setRefreshKey((k) => k + 1)} />}
+              {tab === 'produk' && <ManageProductsScreen key={refreshKey} />}
+              {tab === 'riwayat' && <HistoryScreen key={refreshKey} />}
+              {tab === 'pengaturan' && <SettingsScreen />}
             </View>
 
             <View style={{ paddingHorizontal: 14, paddingBottom: 10, backgroundColor: '#F5F5F5' }}>
@@ -66,7 +70,9 @@ export default function App() {
                 onValueChange={(v) => setTab(v as Tab)}
                 buttons={[
                   { value: 'kasir', label: '🧾 Kasir', showSelectedCheck: false },
+                  { value: 'produk', label: '📦 Produk', showSelectedCheck: false },
                   { value: 'riwayat', label: '📊 Laporan', showSelectedCheck: false },
+                  { value: 'pengaturan', label: '⚙️ Lainnya', showSelectedCheck: false },
                 ]}
                 style={{ backgroundColor: '#FFFFFF' }}
               />

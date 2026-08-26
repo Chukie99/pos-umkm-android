@@ -6,6 +6,8 @@ import { listProducts, listModifierGroups, cartTotals, checkout, type Product, t
 import StickyCartBar, { rupiah } from '../components/StickyCartBar'
 import ModifierSheet from '../components/ModifierSheet'
 import CheckoutSheet from '../components/CheckoutSheet'
+import { buildReceiptText } from '../utils/receipt'
+import { shareReceipt } from '../utils/export'
 
 export default function CashierScreen({ onSold }: { onSold: () => void }) {
   const products = useMemo(() => listProducts(), [])
@@ -15,6 +17,7 @@ export default function CashierScreen({ onSold }: { onSold: () => void }) {
   const [selected, setSelected] = useState<Map<number, string[]>>(new Map())
   const [showCheckout, setShowCheckout] = useState(false)
   const [lastSale, setLastSale] = useState<string | null>(null)
+  const [lastTxId, setLastTxId] = useState<number | null>(null)
 
   const { total, itemCount } = cartTotals(cart)
 
@@ -90,6 +93,10 @@ export default function CashierScreen({ onSold }: { onSold: () => void }) {
     setLastSale(`${res.invoice} • Kembalian ${method === 'cash' ? rupiah(res.change) : '—'}`)
     onSold()
     setTimeout(() => setLastSale(null), 5000)
+    // Remember the new transaction id so the receipt can be shared from the toast
+    const db = require('../db/database').getDb()
+    const row = db.getFirstSync('SELECT id FROM transactions ORDER BY id DESC LIMIT 1') as { id: number } | undefined
+    if (row) setLastTxId(row.id)
   }
 
   return (
@@ -137,6 +144,17 @@ export default function CashierScreen({ onSold }: { onSold: () => void }) {
       {lastSale ? (
         <Surface style={styles.toast} elevation={0}>
           <Text style={styles.toastText}>✔ Terjual — {lastSale}</Text>
+          {lastTxId ? (
+            <Pressable
+              onPress={async () => {
+                try { await shareReceipt(buildReceiptText(lastTxId)) } catch {}
+              }}
+              android_ripple={{ color: colors.chipBg }}
+              style={styles.shareBtn}
+            >
+              <Text style={styles.shareTxt}>📤 Kirim Struk</Text>
+            </Pressable>
+          ) : null}
         </Surface>
       ) : null}
     </View>
@@ -172,6 +190,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.chipBg, borderRadius: 999,
     borderWidth: 1, borderColor: colors.green,
     paddingHorizontal: 18, paddingVertical: 8,
+    flexDirection: 'row', alignItems: 'center', gap: 12,
   },
+  shareBtn: { backgroundColor: '#FFF', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
+  shareTxt: { color: colors.greenDark, fontWeight: '700', fontSize: 12 },
   toastText: { color: colors.greenDark, fontWeight: '700', fontSize: 13 },
 })
