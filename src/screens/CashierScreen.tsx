@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react'
 import { View, StyleSheet, ScrollView, Pressable, Image } from 'react-native'
-import { Text, Surface, Modal } from 'react-native-paper'
+import { Text, Surface } from 'react-native-paper'
 import { colors } from '../theme/theme'
 import { listProducts, cartTotals, checkout, type Product, type CartLine } from '../utils/pos'
 import StickyCartBar, { rupiah } from '../components/StickyCartBar'
@@ -11,21 +11,14 @@ import { shareReceipt } from '../utils/export'
 export default function CashierScreen({ onSold }: { onSold: () => void }) {
   const products = useMemo(() => listProducts(), [])
   const [cart, setCart] = useState<CartLine[]>([])
-  const [pickProduct, setPickProduct] = useState<Product | null>(null)
   const [showCheckout, setShowCheckout] = useState(false)
   const [lastSale, setLastSale] = useState<string | null>(null)
   const [lastTxId, setLastTxId] = useState<number | null>(null)
 
   const { total, itemCount } = cartTotals(cart)
 
-  const openProduct = (p: Product) => {
-    setPickProduct(p)
-  }
-
-  const addLine = () => {
-    if (!pickProduct) return
-    const key = String(pickProduct.id)
-    const unitPrice = pickProduct.price
+  const addProduct = (p: Product) => {
+    const key = String(p.id)
     setCart((prev) => {
       const existing = prev.find((l) => l.key === key)
       if (existing) {
@@ -35,16 +28,15 @@ export default function CashierScreen({ onSold }: { onSold: () => void }) {
         ...prev,
         {
           key,
-          productId: pickProduct.id,
-          productName: pickProduct.name,
-          basePrice: pickProduct.price,
+          productId: p.id,
+          productName: p.name,
+          basePrice: p.price,
           qty: 1,
           modifiers: [],
-          unitPrice,
+          unitPrice: p.price,
         },
       ]
     })
-    setPickProduct(null)
   }
 
   const bumpQty = (key: string, delta: number) => {
@@ -62,7 +54,6 @@ export default function CashierScreen({ onSold }: { onSold: () => void }) {
     setLastSale(`${res.invoice} • Kembalian ${method === 'cash' ? rupiah(res.change) : '—'}`)
     onSold()
     setTimeout(() => setLastSale(null), 5000)
-    // Remember the new transaction id so the receipt can be shared from the toast
     const db = require('../db/database').getDb()
     const row = db.getFirstSync('SELECT id FROM transactions ORDER BY id DESC LIMIT 1') as { id: number } | undefined
     if (row) setLastTxId(row.id)
@@ -76,9 +67,9 @@ export default function CashierScreen({ onSold }: { onSold: () => void }) {
           <Text style={styles.emptyTxt}>Belum ada produk. Tambah dulu di menu Kelola Produk.</Text>
         ) : null}
         {products.map((p) => {
-          const inCart = cart.find((l) => l.key.startsWith(`${p.id}::`))
+          const inCart = cart.find((l) => l.key === String(p.id))
           return (
-            <Pressable key={p.id} style={[styles.card, inCart && styles.cardActive]} android_ripple={{ color: colors.chipBg }} onPress={() => openProduct(p)}>
+            <Pressable key={p.id} style={[styles.card, inCart && styles.cardActive]} android_ripple={{ color: colors.chipBg }} onPress={() => addProduct(p)}>
               {inCart ? (
                 <View style={styles.cardBadge}>
                   <Text style={styles.cardBadgeTxt}>{inCart.qty}</Text>
@@ -100,11 +91,11 @@ export default function CashierScreen({ onSold }: { onSold: () => void }) {
         })}
       </ScrollView>
 
-      {/* Cart items panel — list of what's ordered, with qty steppers */}
+      {/* Cart items panel */}
       {cart.length > 0 && !showCheckout ? (
         <Surface style={styles.cartPanel} elevation={0}>
           <View style={styles.cartHead}>
-            <Text style={styles.cartTitle}>🧺 Pesanan</Text>
+            <Text style={styles.cartTitle}>Pesanan</Text>
             <Pressable onPress={() => setCart([])} hitSlop={8}>
               <Text style={styles.cartClear}>Kosongkan</Text>
             </Pressable>
@@ -136,19 +127,6 @@ export default function CashierScreen({ onSold }: { onSold: () => void }) {
 
       <StickyCartBar visible cart={cart} total={total} onCheckout={() => setShowCheckout(true)} />
 
-      {/* Product confirm sheet — no more modifier picker */}
-      <Modal visible={!!pickProduct} onDismiss={() => setPickProduct(null)} contentContainerStyle={styles.sheet}>
-        {pickProduct ? (
-          <>
-            <Text variant="headlineSmall" style={styles.sheetTitle}>{pickProduct.name}</Text>
-            <Text style={styles.sheetPrice}>{rupiah(pickProduct.price)}</Text>
-            <Pressable onPress={addLine} style={styles.addPlainBtn}>
-              <Text style={styles.addPlainTxt}>✓ Tambah ke Pesanan</Text>
-            </Pressable>
-          </>
-        ) : null}
-      </Modal>
-
       <CheckoutSheet
         visible={showCheckout}
         cart={cart}
@@ -158,7 +136,7 @@ export default function CashierScreen({ onSold }: { onSold: () => void }) {
 
       {lastSale ? (
         <Surface style={styles.toast} elevation={0}>
-          <Text style={styles.toastText}>✔ Terjual — {lastSale}</Text>
+          <Text style={styles.toastText}>Terjual — {lastSale}</Text>
           {lastTxId ? (
             <Pressable
               onPress={async () => {
@@ -167,7 +145,7 @@ export default function CashierScreen({ onSold }: { onSold: () => void }) {
               android_ripple={{ color: colors.chipBg }}
               style={styles.shareBtn}
             >
-              <Text style={styles.shareTxt}>📤 Kirim Struk</Text>
+              <Text style={styles.shareTxt}>Kirim Struk</Text>
             </Pressable>
           ) : null}
           {lastTxId ? (
@@ -178,7 +156,7 @@ export default function CashierScreen({ onSold }: { onSold: () => void }) {
               android_ripple={{ color: colors.chipBg }}
               style={styles.printBtn}
             >
-              <Text style={styles.shareTxt}>🖨️ Cetak</Text>
+              <Text style={styles.shareTxt}>Cetak</Text>
             </Pressable>
           ) : null}
         </Surface>
@@ -193,7 +171,7 @@ const styles = StyleSheet.create({
   card: {
     width: '31.5%',
     flexGrow: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.surface,
     borderRadius: 14,
     borderWidth: 1,
     borderColor: colors.border,
@@ -222,10 +200,11 @@ const styles = StyleSheet.create({
   stockTagTxt: { color: '#FFF', fontSize: 9, fontWeight: '800' },
   cartPanel: {
     position: 'absolute', left: 12, right: 12, bottom: 88,
-    backgroundColor: '#FFFFFF', borderRadius: 18,
+    backgroundColor: colors.surface, borderRadius: 18,
     borderWidth: 1, borderColor: colors.border,
     paddingVertical: 12, paddingHorizontal: 16,
-    shadowColor: '#0E4A43', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.12, shadowRadius: 10, elevation: 6,
+    shadowColor: colors.text,
+    shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.12, shadowRadius: 10, elevation: 6,
   },
   cartHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
   cartTitle: { fontSize: 14, fontWeight: '900', color: colors.text },
@@ -238,10 +217,6 @@ const styles = StyleSheet.create({
   stepBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
   stepTxt: { fontSize: 20, fontWeight: '900', color: colors.greenDark, lineHeight: 24 },
   stepQty: { minWidth: 30, textAlign: 'center', fontSize: 15, fontWeight: '900', color: colors.text },
-  sheetTitle: { fontWeight: '800', color: colors.text },
-  sheetPrice: { fontSize: 18, fontWeight: '800', color: colors.greenDark, marginBottom: 16 },
-  addPlainBtn: { marginTop: 12, alignItems: 'center', paddingVertical: 8 },
-  addPlainTxt: { color: colors.greenDark, fontWeight: '700', fontSize: 16 },
   toast: {
     position: 'absolute', top: 14, alignSelf: 'center',
     backgroundColor: colors.chipBg, borderRadius: 999,
@@ -249,7 +224,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18, paddingVertical: 8,
     flexDirection: 'row', alignItems: 'center', gap: 12,
   },
-  shareBtn: { backgroundColor: '#FFF', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
+  shareBtn: { backgroundColor: colors.surface, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
   printBtn: { backgroundColor: colors.cream, borderRadius: 10, paddingVertical: 10, paddingHorizontal: 14, borderWidth: 1, borderColor: colors.yellow },
   shareTxt: { color: colors.greenDark, fontWeight: '700', fontSize: 12 },
   toastText: { color: colors.greenDark, fontWeight: '700', fontSize: 13 },

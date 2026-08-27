@@ -11,10 +11,10 @@ interface Props {
 }
 
 const ITEMS: { id: Tab; label: string; icon: string }[] = [
-  { id: 'kasir', label: 'Kasir', icon: '🧾' },
-  { id: 'produk', label: 'Produk', icon: '📦' },
-  { id: 'riwayat', label: 'Laporan', icon: '📊' },
-  { id: 'pengaturan', label: 'Lainnya', icon: '⚙️' },
+  { id: 'kasir', label: 'Kasir', icon: 'KSR' },
+  { id: 'produk', label: 'Produk', icon: 'PRD' },
+  { id: 'riwayat', label: 'Laporan', icon: 'LPR' },
+  { id: 'pengaturan', label: 'Lainnya', icon: 'LNY' },
 ]
 
 export default function FloatingBottomBar({ active, onChange }: Props) {
@@ -32,10 +32,11 @@ export default function FloatingBottomBar({ active, onChange }: Props) {
                 styles.item,
                 pressed && styles.itemPressed,
                 isActive && styles.itemActive,
-                isActive && { backgroundColor: colors.green },
               ]}
             >
-              <Text style={[styles.icon, isActive && styles.iconActive]}>{item.icon}</Text>
+              <View style={[styles.iconWrap, isActive && styles.iconWrapActive]}>
+                <Text style={[styles.icon, isActive && styles.iconActive]}>{item.icon}</Text>
+              </View>
               <Text style={[styles.label, isActive && styles.labelActive]}>{item.label}</Text>
             </Pressable>
           )
@@ -48,7 +49,7 @@ export default function FloatingBottomBar({ active, onChange }: Props) {
 const styles = StyleSheet.create({
   wrap: {
     position: 'absolute',
-    bottom: 24,
+    bottom: 20,
     left: 0,
     right: 0,
     alignItems: 'center',
@@ -56,26 +57,27 @@ const styles = StyleSheet.create({
   },
   bar: {
     flexDirection: 'row',
-    gap: 6,
-    backgroundColor: colors.bg,
+    gap: 4,
+    backgroundColor: colors.surface,
     borderRadius: 28,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
     shadowColor: colors.text,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.12,
-    shadowRadius: 14,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 12,
     borderWidth: 1,
     borderColor: colors.border,
   },
   item: {
-    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 6,
-    borderRadius: 18,
-    gap: 2,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    gap: 3,
+    minWidth: 64,
   },
   itemPressed: {
     opacity: 0.7,
@@ -83,16 +85,27 @@ const styles = StyleSheet.create({
   itemActive: {
     backgroundColor: colors.green,
   },
+  iconWrap: {
+    width: 32,
+    height: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconWrapActive: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+  },
   icon: {
-    fontSize: 20,
-    opacity: 0.55,
+    fontSize: 10,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+    color: colors.textMuted,
   },
   iconActive: {
-    opacity: 1,
     color: '#FFF',
   },
   label: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '700',
     color: colors.textMuted,
   },

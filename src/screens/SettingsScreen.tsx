@@ -21,14 +21,14 @@ export default function SettingsScreen({ dark, onToggleTheme }: Props) {
   const saveStore = () => {
     setSetting('storeName', storeName.trim())
     setEditingStore(false)
-    setStatus('✅ Nama toko disimpan')
+    setStatus('Nama toko disimpan')
     setTimeout(() => setStatus(''), 3000)
   }
 
   const saveLink = () => {
     setSetting('buyLink', buyLink.trim())
     setEditingLink(false)
-    setStatus('✅ Link pembelian disimpan')
+    setStatus('Link pembelian disimpan')
     setTimeout(() => setStatus(''), 3000)
   }
 
@@ -36,9 +36,9 @@ export default function SettingsScreen({ dark, onToggleTheme }: Props) {
     try {
       setStatus('Membuat file laporan...')
       const r = await exportDailyReport()
-      setStatus(r === 'shared' ? '✅ Laporan dibuat — pilih aplikasi tujuan (WA/Email)' : '❌ Share sheet tidak tersedia')
+      setStatus(r === 'shared' ? 'Laporan dibuat — pilih aplikasi tujuan (WA/Email)' : 'Share sheet tidak tersedia')
     } catch (e) {
-      setStatus('⚠️ Gagal: ' + (e instanceof Error ? e.message : String(e)))
+      setStatus('Gagal: ' + (e instanceof Error ? e.message : String(e)))
     }
   }
 
@@ -46,9 +46,9 @@ export default function SettingsScreen({ dark, onToggleTheme }: Props) {
     try {
       setStatus('Membuat backup database...')
       const r = await createBackup()
-      setStatus(r === 'shared' ? '✅ Backup dibuat — simpan ke Google Drive/WA sendiri' : '❌ Share tidak tersedia')
+      setStatus(r === 'shared' ? 'Backup dibuat — simpan ke Google Drive/WA sendiri' : 'Share tidak tersedia')
     } catch (e) {
-      setStatus('⚠️ Gagal backup: ' + (e instanceof Error ? e.message : String(e)))
+      setStatus('Gagal backup: ' + (e instanceof Error ? e.message : String(e)))
     }
   }
 
@@ -62,10 +62,10 @@ export default function SettingsScreen({ dark, onToggleTheme }: Props) {
       setStatus('Memulihkan data...')
       setTimeout(() => {
         const r = restoreFromSql(content)
-        setStatus(r.ok ? '✅ ' + r.message : '⚠️ ' + r.message)
+        setStatus(r.ok ? r.message : r.message)
       }, 50)
     } catch (e) {
-      setStatus('⚠️ Gagal restore: ' + (e instanceof Error ? e.message : String(e)))
+      setStatus('Gagal restore: ' + (e instanceof Error ? e.message : String(e)))
     }
   }
 
@@ -84,7 +84,7 @@ export default function SettingsScreen({ dark, onToggleTheme }: Props) {
         ) : (
           <View style={{ padding: 14, gap: 10 }}>
             <TextInput value={storeName} onChangeText={setStoreName} placeholder="contoh: Warung Bu Sari"
-              style={{ backgroundColor: '#FFF' }} dense autoFocus />
+              style={{ backgroundColor: colors.surface }} dense autoFocus />
             <View style={{ flexDirection: 'row', gap: 8 }}>
               <Button mode="contained" onPress={saveStore} compact>Simpan</Button>
               <Button mode="text" onPress={() => setEditingStore(false)} textColor={colors.textMuted} compact>Batal</Button>
@@ -97,7 +97,7 @@ export default function SettingsScreen({ dark, onToggleTheme }: Props) {
       <Surface style={styles.card} elevation={0}>
         <List.Item
           title="Mode Gelap / Terang"
-          description={dark ? 'Sedang aktif: Gelap 🌙' : 'Sedang aktif: Terang ☀️'}
+          description={dark ? 'Sedang aktif: Gelap' : 'Sedang aktif: Terang'}
           left={(p) => <List.Icon {...p} icon={dark ? 'weather-night' : 'white-balance-sunny'} color={colors.green} />}
           right={() => (
             <Pressable onPress={onToggleTheme} style={[styles.themeSwitch, dark && styles.themeSwitchOn]} hitSlop={6}>
@@ -151,7 +151,7 @@ export default function SettingsScreen({ dark, onToggleTheme }: Props) {
           <View style={{ padding: 14, gap: 10 }}>
             <Text style={{ fontSize: 12, color: colors.textMuted }}>Link toko / halaman pembelian (Lynk.id, WhatsApp, dll)</Text>
             <TextInput value={buyLink} onChangeText={setBuyLink} placeholder="https://lynk.id/namatoko"
-              style={{ backgroundColor: '#FFF' }} dense autoCapitalize="none" keyboardType="url" autoFocus />
+              style={{ backgroundColor: colors.surface }} dense autoCapitalize="none" keyboardType="url" autoFocus />
             <View style={{ flexDirection: 'row', gap: 8 }}>
               <Button mode="contained" onPress={saveLink} compact>Simpan</Button>
               <Button mode="text" onPress={() => setEditingLink(false)} textColor={colors.textMuted} compact>Batal</Button>
@@ -174,7 +174,7 @@ export default function SettingsScreen({ dark, onToggleTheme }: Props) {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
   section: { fontSize: 15, fontWeight: '800', color: colors.text, margin: 14, marginBottom: 8 },
-  card: { backgroundColor: '#FFFFFF', borderRadius: 12, borderWidth: 1, borderColor: colors.border, overflow: 'hidden', marginHorizontal: 14 },
+  card: { backgroundColor: colors.surface, borderRadius: 12, borderWidth: 1, borderColor: colors.border, overflow: 'hidden', marginHorizontal: 14 },
   statusBox: { margin: 14, backgroundColor: colors.chipBg, borderRadius: 10, padding: 12 },
   statusText: { color: colors.greenDark, fontSize: 13, fontWeight: '600' },
   themeSwitch: {

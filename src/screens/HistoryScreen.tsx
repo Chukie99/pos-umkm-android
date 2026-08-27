@@ -41,7 +41,6 @@ export default function HistoryScreen() {
   const cash = rows.filter((r) => r.payment_method === 'cash').reduce((s, r) => s + r.total, 0)
   const qris = rows.filter((r) => r.payment_method === 'qris').reduce((s, r) => s + r.total, 0)
 
-  // Produk terlaris untuk periode ini
   const topProducts = React.useMemo(() => {
     try {
       return getDb().getAllSync<{ name: string; qty: number; sales: number }>(
@@ -55,13 +54,14 @@ export default function HistoryScreen() {
 
   return (
     <View style={styles.root}>
-      {/* Period switcher */}
+      {/* Period switcher — pill-shaped */}
       <View style={styles.tabs}>
         {(Object.keys(PERIOD_LABEL) as Period[]).map((p: Period) => (
           <Pressable
             key={p}
             onPress={() => setPeriod(p)}
             style={[styles.tab, period === p && styles.tabActive]}
+            android_ripple={{ color: colors.chipBg, borderless: true }}
           >
             <RNText style={[styles.tabTxt, period === p && styles.tabTxtActive]}>{PERIOD_LABEL[p]}</RNText>
           </Pressable>
@@ -83,10 +83,9 @@ export default function HistoryScreen() {
           </Surface>
         ) : null}
 
-        {/* Produk terlaris */}
         {topProducts.length > 0 ? (
           <Surface style={styles.topCard} elevation={0}>
-            <Text style={styles.topTitle}>🏆 Produk Terlaris — {PERIOD_LABEL[period]}</Text>
+            <Text style={styles.topTitle}>Produk Terlaris — {PERIOD_LABEL[period]}</Text>
             {topProducts.map((t, i) => (
               <View key={t.name} style={styles.topRow}>
                 <RNText style={styles.topRank}>{i + 1}.</RNText>
@@ -139,34 +138,34 @@ function TransactionList({ rows }: { rows: Row[] }) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
-  tabs: { flexDirection: 'row', gap: 8, padding: 14, paddingBottom: 4 },
+  tabs: { flexDirection: 'row', gap: 6, padding: 14, paddingBottom: 4 },
   tab: {
     flex: 1, alignItems: 'center', paddingVertical: 10,
-    borderRadius: 12, borderWidth: 1, borderColor: colors.border, backgroundColor: '#FFF',
+    borderRadius: 20, borderWidth: 1.5, borderColor: colors.border, backgroundColor: colors.surface,
   },
   tabActive: { backgroundColor: colors.green, borderColor: colors.green },
   tabTxt: { fontSize: 13, fontWeight: '700', color: colors.textMuted },
   tabTxtActive: { color: '#FFF' },
   cards: { flexDirection: 'row', gap: 10, paddingHorizontal: 14, paddingTop: 10 },
-  statCard: { flex: 1, backgroundColor: '#FFFFFF', borderRadius: 14, borderWidth: 1, borderColor: colors.border, padding: 16 },
+  statCard: { flex: 1, backgroundColor: colors.surface, borderRadius: 14, borderWidth: 1, borderColor: colors.border, padding: 16 },
   statHighlight: { backgroundColor: colors.green, borderColor: colors.green },
   statLabel: { fontSize: 12, color: colors.textMuted, marginBottom: 6 },
   statValue: { fontSize: 17, fontWeight: '800', color: colors.text, flexShrink: 1 },
   discBanner: { marginHorizontal: 14, marginTop: 10, backgroundColor: colors.cream, borderRadius: 12, padding: 12, borderWidth: 1, borderColor: colors.yellow },
   discTxt: { fontSize: 13, fontWeight: '700', color: colors.badgeText },
-  topCard: { marginHorizontal: 14, marginTop: 10, backgroundColor: '#FFFFFF', borderRadius: 14, borderWidth: 1, borderColor: colors.border, padding: 16 },
+  topCard: { marginHorizontal: 14, marginTop: 10, backgroundColor: colors.surface, borderRadius: 14, borderWidth: 1, borderColor: colors.border, padding: 16 },
   topTitle: { fontSize: 14, fontWeight: '800', color: colors.text, marginBottom: 10 },
   topRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 5 },
   topRank: { width: 20, fontSize: 13, color: colors.textMuted, fontWeight: '700' },
   topName: { flex: 1, fontSize: 13, color: colors.text, fontWeight: '600' },
   topQty: { fontSize: 13, fontWeight: '800', color: colors.greenDark, minWidth: 36, textAlign: 'right' },
   topSales: { fontSize: 12, color: colors.textMuted, minWidth: 90, textAlign: 'right' },
-  listCard: { marginHorizontal: 14, marginTop: 12, backgroundColor: '#FFFFFF', borderRadius: 14, borderWidth: 1, borderColor: colors.border, padding: 6 },
+  listCard: { marginHorizontal: 14, marginTop: 12, backgroundColor: colors.surface, borderRadius: 14, borderWidth: 1, borderColor: colors.border, padding: 6 },
   txRow: { flexDirection: 'row', alignItems: 'center', padding: 12, borderBottomWidth: 1, borderBottomColor: colors.border, gap: 10 },
   txInvoice: { fontSize: 13, fontWeight: '800', color: colors.text },
   txItems: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
   txTime: { fontSize: 11, color: colors.textMuted, marginTop: 2 },
   txTotal: { fontSize: 15, fontWeight: '800', color: colors.green, minWidth: 100, textAlign: 'right' },
-  empty: { marginHorizontal: 14, marginTop: 12, backgroundColor: '#FFFFFF', borderRadius: 14, borderWidth: 1, borderColor: colors.border, padding: 24, alignItems: 'center' },
+  empty: { marginHorizontal: 14, marginTop: 12, backgroundColor: colors.surface, borderRadius: 14, borderWidth: 1, borderColor: colors.border, padding: 24, alignItems: 'center' },
   emptyTxt: { color: colors.textMuted, fontSize: 13 },
 })

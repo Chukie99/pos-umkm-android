@@ -15,7 +15,7 @@ export interface CartLine {
   productName: string
   basePrice: number
   qty: number
-  modifiers: []
+  modifiers: { label: string; extraPrice: number }[]
   unitPrice: number
 }
 

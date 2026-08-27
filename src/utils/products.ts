@@ -27,8 +27,8 @@ export function addProduct(name: string, price: number, categoryId: number | nul
   if (!name.trim()) throw new Error('Nama produk wajib diisi')
   if (!(price > 0)) throw new Error('Harga harus lebih dari 0')
   getDb().runSync(
-    'INSERT INTO products (name, price, category_id, stock) VALUES (?, ?, ?, ?)',
-    [name.trim(), Math.round(price), categoryId, stock]
+    'INSERT INTO products (name, price, category_id, stock, image_uri) VALUES (?, ?, ?, ?, ?)',
+    [name.trim(), Math.round(price), categoryId, stock, imageUri]
   )
 }
 
@@ -36,8 +36,8 @@ export function updateProduct(id: number, name: string, price: number, categoryI
   if (!name.trim()) throw new Error('Nama produk wajib diisi')
   if (!(price > 0)) throw new Error('Harga harus lebih dari 0')
   getDb().runSync(
-    'UPDATE products SET name = ?, price = ?, category_id = ?, stock = ? WHERE id = ?',
-    [name.trim(), Math.round(price), categoryId, stock, id]
+    'UPDATE products SET name = ?, price = ?, category_id = ?, stock = ?, image_uri = ? WHERE id = ?',
+    [name.trim(), Math.round(price), categoryId, stock, imageUri, id]
   )
 }
 

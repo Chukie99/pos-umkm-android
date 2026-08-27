@@ -63,7 +63,7 @@ export default function App() {
           />
         ) : (
           <View key={themeTick} style={{ flex: 1, backgroundColor: colors.bg }}>
-            <Appbar.Header elevated={false} style={{ backgroundColor: dark ? '#1D2C29' : '#FFFFFF' }}>
+            <Appbar.Header elevated={false} style={{ backgroundColor: colors.surface }}>
               <Appbar.Content
                 title={
                   tab === 'kasir' ? `${getSetting('storeName', 'POS UMKM')} — Kasir`

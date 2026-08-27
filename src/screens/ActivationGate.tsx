@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center', padding: 24 },
   brand: { fontSize: 34, fontWeight: '900', color: colors.greenDark, letterSpacing: 2 },
   tagline: { fontSize: 14, color: colors.textMuted, marginTop: 4, marginBottom: 28 },
-  card: { width: '100%', backgroundColor: '#FFFFFF', borderRadius: 18, borderWidth: 1, borderColor: colors.border, padding: 24 },
+  card: { width: '100%', backgroundColor: colors.surface, borderRadius: 18, borderWidth: 1, borderColor: colors.border, padding: 24 },
   sectionLabel: { fontSize: 13, fontWeight: '700', color: colors.textMuted, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 },
   deviceBox: { backgroundColor: colors.chipBg, borderRadius: 12, borderWidth: 1, borderColor: colors.green, alignItems: 'center', paddingVertical: 16 },
   deviceCode: { fontSize: 22, fontWeight: '900', color: colors.greenDark, letterSpacing: 3 },
@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
   waBtn: { backgroundColor: '#25D366', borderRadius: 12, height: 50, alignItems: 'center', justifyContent: 'center', marginTop: 14 },
   waBtnText: { color: '#FFF', fontWeight: '800', fontSize: 15, letterSpacing: 0.5 },
   inputBox: {
-    backgroundColor: '#FDF0D5',
+    backgroundColor: colors.chipBg,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: colors.border,

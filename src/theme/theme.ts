@@ -13,14 +13,13 @@ import { MD3LightTheme, configureFonts } from 'react-native-paper'
  */
 
 // Font: pakai system default untuk konsistensi tiap platform.
-// Di Android → 'sans-serif', iOS → '.SF Pro Text'. Tanpa hal ini,
-// tema gelap malah terlihat suram karena fallback font tipis.
 const fontConfig = {
   default: {
-    regular: { fontFamily: 'System', fontWeight: '400' },
-    medium: { fontFamily: 'System', fontWeight: '500' },
-    light: { fontFamily: 'System', fontWeight: '300' },
-    thin: { fontFamily: 'System', fontWeight: '200' },
+    fontFamily: 'System',
+    fontWeight: '400' as const,
+    fontSize: 14,
+    lineHeight: 20,
+    letterSpacing: 0.25,
   },
 }
 
@@ -56,10 +55,12 @@ function palette(mode: 'light' | 'dark') {
     yellow: '#E9C46A',
     terracotta: '#E76F51',
     cream: '#FDF0D5',
+    blue: '#2A9D8F',
   }
   if (mode === 'dark') {
     return {
       bg: '#0E1E1C',
+      surface: '#142420',
       text: '#F0EBDF',
       textMuted: '#A8B5B0',
       green: base.teal,       // teal utama tetap konsisten
@@ -77,6 +78,7 @@ function palette(mode: 'light' | 'dark') {
   }
   return {
     bg: '#FBF6EC',
+    surface: '#FFFFFF',
     text: '#2A2721',
     textMuted: '#6E6A5E',
     green: base.teal,

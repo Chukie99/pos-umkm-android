@@ -43,11 +43,14 @@ export default function ManageProductsScreen() {
         })
         if (res.canceled || !res.assets?.[0]) return
         const asset = res.assets[0]
-        // Kuar ke file lokal supaya URI tetap valid
         const fileName = asset.uri.split('/').pop()
-        const destUri = `${FileSystem.documentDirectory}pos_images/${fileName}`
-        await FileSystem.makeDirectoryAsync(FileSystem.documentDirectory + 'pos_images/', { intermediates: true })
-        await FileSystem.copyAsync({ from: asset.uri, to: destUri })
+        // @ts-ignore - expo-file-system v57 API
+        const docDir = FileSystem.default?.documentDirectory || ''
+        const destUri = `${docDir}pos_images/${fileName}`
+        // @ts-ignore - expo-file-system v57 API
+        await FileSystem.default.makeDirectoryAsync(`${docDir}pos_images/`, { intermediates: true })
+        // @ts-ignore - expo-file-system v57 API
+        await FileSystem.default.copyAsync({ from: asset.uri, to: destUri })
         setEditing((prev) => (prev ? { ...prev, imageUri: destUri } : prev))
       } catch (e) {
         Alert.alert('Gagal', e instanceof Error ? e.message : String(e))
@@ -101,7 +104,6 @@ export default function ManageProductsScreen() {
           Tambah Produk Baru
         </Button>
 
-        {/* Category quick-add */}
         {!showNewCat ? (
           <Pressable onPress={() => setShowNewCat(true)}>
             <Text style={styles.catLink}>+ Tambah kategori baru</Text>
@@ -112,7 +114,7 @@ export default function ManageProductsScreen() {
               value={newCat}
               onChangeText={setNewCat}
               placeholder="Nama kategori (contoh: Snack)"
-              style={{ flex: 1, backgroundColor: '#FFF' }}
+              style={{ flex: 1, backgroundColor: colors.surface }}
               dense
             />
             <Button mode="contained" onPress={saveCategory} compact style={{ marginLeft: 8 }}>
@@ -141,13 +143,12 @@ export default function ManageProductsScreen() {
               trackColor={{ true: colors.green }}
             />
             <Pressable onPress={() => confirmDelete(p)} hitSlop={12}>
-              <Text style={styles.del}>🗑</Text>
+              <Text style={styles.del}>Hapus</Text>
             </Pressable>
           </Surface>
         ))}
       </ScrollView>
 
-      {/* Add/Edit modal */}
       <Modal visible={!!editing} onDismiss={() => setEditing(null)} contentContainerStyle={styles.modal}>
         {editing ? (
           <>
@@ -157,7 +158,7 @@ export default function ManageProductsScreen() {
 
             <Text style={styles.label}>Nama Produk *</Text>
             <TextInput value={editing.name} onChangeText={(v) => setEditing({ ...editing, name: v })}
-              style={{ backgroundColor: '#FFF' }} placeholder="contoh: Kopi Susu Gula Aren"
+              style={{ backgroundColor: colors.surface }} placeholder="contoh: Kopi Susu Gula Aren"
               placeholderTextColor={colors.textMuted} />
 
             <Text style={styles.label}>Harga Jual * (per item, dalam rupiah)</Text>
@@ -168,7 +169,7 @@ export default function ManageProductsScreen() {
               onChangeText={(v) => setEditing({ ...editing, price: v.replace(/\D/g, '') })}
               keyboardType="number-pad"
               left={<TextInput.Affix text="Rp " />}
-              style={{ backgroundColor: '#FFF', fontSize: 18, fontWeight: '800' }}
+              style={{ backgroundColor: colors.surface, fontSize: 18, fontWeight: '800' }}
               placeholder="0" placeholderTextColor={colors.textMuted} />
 
             <Text style={styles.label}>Stok — jumlah barang tersedia</Text>
@@ -176,7 +177,7 @@ export default function ManageProductsScreen() {
               onChangeText={(v) => setEditing({ ...editing, stock: v.replace(/\D/g, '') })}
               keyboardType="number-pad"
               left={<TextInput.Affix text="Stok: " />}
-              style={{ backgroundColor: '#FFF' }} placeholder="Kosongkan jika tidak perlu dilacak"
+              style={{ backgroundColor: colors.surface }} placeholder="Kosongkan jika tidak perlu dilacak"
               placeholderTextColor={colors.textMuted} />
 
             <Text style={styles.label}>Foto Produk (opsional)</Text>
@@ -185,12 +186,12 @@ export default function ManageProductsScreen() {
                 <>
                   <Image source={{ uri: editing.imageUri }} style={styles.imgPreview} />
                   <Pressable onPress={() => setEditing({ ...editing, imageUri: null })} hitSlop={10}>
-                    <Text style={styles.imgRemove}>✕ hapus foto</Text>
+                    <Text style={styles.imgRemove}>hapus foto</Text>
                   </Pressable>
                 </>
               ) : (
                 <>
-                  <Text style={styles.imgPickerIcon}>🖼️</Text>
+                  <Text style={styles.imgPickerIcon}>Foto</Text>
                   <Text style={styles.imgPickerTxt}>Pilih dari Galeri</Text>
                   <Text style={styles.imgPickerSub}>Foto muncul di layar kasir biar makin menarik</Text>
                 </>
@@ -232,7 +233,7 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 15, fontWeight: '800', color: colors.text, marginBottom: 10 },
   card: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
-    backgroundColor: '#FFF', borderRadius: 12, borderWidth: 1, borderColor: colors.border,
+    backgroundColor: colors.surface, borderRadius: 12, borderWidth: 1, borderColor: colors.border,
     padding: 14, marginBottom: 8,
   },
   cardInactive: { opacity: 0.55 },
@@ -241,8 +242,8 @@ const styles = StyleSheet.create({
   inactive: { fontSize: 11, color: colors.error, marginTop: 2 },
   stockTxt: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
   stockLow: { color: colors.terra, fontWeight: '700' },
-  del: { fontSize: 18 },
-  modal: { backgroundColor: '#FFF', margin: 20, borderRadius: 20, padding: 22 },
+  del: { fontSize: 13, color: colors.error, fontWeight: '700' },
+  modal: { backgroundColor: colors.surface, margin: 20, borderRadius: 20, padding: 22 },
   modalTitle: { fontWeight: '800', color: colors.text, marginBottom: 16 },
   label: { fontSize: 13, fontWeight: '600', color: colors.text, marginTop: 12, marginBottom: 6 },
   priceHintBox: { borderRadius: 8, paddingVertical: 4, paddingHorizontal: 10, marginBottom: 6, alignSelf: 'flex-start' },
@@ -251,7 +252,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5, borderStyle: 'dashed', borderColor: colors.border, borderRadius: 14,
     alignItems: 'center', paddingVertical: 18, marginTop: 2, backgroundColor: colors.chipBg,
   },
-  imgPickerIcon: { fontSize: 28 },
+  imgPickerIcon: { fontSize: 14, fontWeight: '700', color: colors.textMuted },
   imgPickerTxt: { color: colors.greenDark, fontWeight: '800', marginTop: 6, fontSize: 14 },
   imgPickerSub: { color: colors.textMuted, fontSize: 11, marginTop: 3 },
   imgPreview: { width: 110, height: 110, borderRadius: 12 },
@@ -259,7 +260,7 @@ const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {
     borderWidth: 1, borderColor: colors.border, borderRadius: 999,
-    paddingHorizontal: 14, paddingVertical: 7, backgroundColor: '#FFF',
+    paddingHorizontal: 14, paddingVertical: 7, backgroundColor: colors.surface,
   },
   chipActive: { backgroundColor: colors.chipBg, borderColor: colors.green },
   chipTxt: { fontSize: 13, color: colors.text },
