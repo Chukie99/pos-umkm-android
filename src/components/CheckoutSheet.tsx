@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react'
-import { View, StyleSheet, Pressable, ScrollView } from 'react-native'
+import React from 'react'
+import { View, StyleSheet, Pressable } from 'react-native'
 import { Text, Surface, Modal, Button, SegmentedButtons, TextInput } from 'react-native-paper'
 import { colors } from '../theme/theme'
 import type { CartLine } from '../utils/pos'
@@ -8,30 +8,35 @@ import { rupiah } from '../components/StickyCartBar'
 interface Props {
   visible: boolean
   cart: CartLine[]
-  onClose: () => void
+  total: number
+  discount: number
   onConfirm: (method: 'cash' | 'qris', paid: number, discount: number) => void
 }
 
-const QUICK_CASH = [20000, 50000, 100000]
+/* Nominal uang pas dihapus - kasir langsung ketik nominal uang yang dibayarkan */
 
-export default function CheckoutSheet({ visible, cart, onClose, onConfirm }: Props) {
+export default function CheckoutSheet({ visible, cart, total, discount, onConfirm }: Props) {
   const [method, setMethod] = React.useState<'cash' | 'qris'>('cash')
   const [paidStr, setPaidStr] = React.useState('')
   const [discMode, setDiscMode] = React.useState<'none' | 'rp' | 'pct'>('none')
   const [discVal, setDiscVal] = React.useState('')
   const subtotal = cart.reduce((s, l) => s + l.unitPrice * l.qty, 0)
-  const discount =
+  const calculatedDiscount =
     discMode === 'rp'
       ? Math.min(subtotal, parseInt(discVal.replace(/\D/g, '') || '0', 10))
       : discMode === 'pct'
         ? Math.floor((subtotal * Math.min(100, parseInt(discVal.replace(/\D/g, '') || '0', 10))) / 100)
         : 0
-  const total = Math.max(0, subtotal - discount)
-  const paid = method === 'qris' ? total : parseInt(paidStr.replace(/\D/g, '') || '0', 10)
-  const change = Math.max(0, paid - total)
-  const enough = method === 'qris' || paid >= total
+  const finalTotal = Math.max(0, subtotal - calculatedDiscount)
+  const paid = method === 'qris' ? finalTotal : parseInt(paidStr.replace(/\D/g, '') || '0', 10)
+  const change = Math.max(0, paid - finalTotal)
+  const enough = method === 'qris' || paid >= finalTotal
 
   const reset = () => { setPaidStr(''); setMethod('cash'); setDiscMode('none'); setDiscVal('') }
+
+  React.useEffect(() => {
+    if (method === 'qris') setPaidStr('')
+  }, [method])
 
   return (
     <Modal visible={visible} onDismiss={onClose} contentContainerStyle={styles.modal}>
@@ -67,10 +72,15 @@ export default function CheckoutSheet({ visible, cart, onClose, onConfirm }: Pro
           />
         ) : null}
       </View>
-      {discount > 0 ? (
-        <Text style={styles.discApplied}>Diskon −{rupiah(discount)} → Total {rupiah(total)}</Text>
+      {calculatedDiscount > 0 ? (
+        <Text style={styles.discApplied}>Diskon −{rupiah(calculatedDiscount)}</Text>
       ) : null}
+      <Text style={styles.totalRow}>
+        <Text style={styles.totalLabel}>Total Dibayar</Text>
+        <Text style={styles.totalValue}>{rupiah(finalTotal)}</Text>
+      </Text>
 
+      {/* Metode Bayar */}
       <SegmentedButtons
         value={method}
         onValueChange={(v) => setMethod(v as 'cash' | 'qris')}
@@ -81,44 +91,46 @@ export default function CheckoutSheet({ visible, cart, onClose, onConfirm }: Pro
         style={styles.segmented}
       />
 
+      {/* QRIS: langsung total, tunai: input manual sederhana */}
       {method === 'cash' ? (
-        <>
+        <View style={{ marginTop: 12 }}>
           <Text style={styles.label}>Uang Diterima</Text>
-          <Surface style={styles.paidBox} elevation={0}>
-            <Text style={[styles.paidText, !enough && styles.paidBad]}>{rupiah(paid)}</Text>
-          </Surface>
-          <View style={styles.quickRow}>
-            {[total, ...QUICK_CASH.filter((v) => v > total)].map((v) => (
-              <Button key={v} mode="outlined" compact onPress={() => setPaidStr(String(v))} style={styles.quickBtn}>
-                Pas ({rupiah(v)})
-              </Button>
-            ))}
-          </View>
-        </>
-      ) : (
-        <Surface style={styles.qrisBox} elevation={0}>
-          <Text style={styles.qrisText}>
-            Minta customer scan QRIS merchant, lalu tekan konfirmasi setelah dana masuk.
-          </Text>
-        </Surface>
-      )}
+          <TextInput
+            value={paidStr}
+            onChangeText={(v) => setPaidStr(v.replace(/\D/g, ''))}
+            keyboardType="number-pad"
+            dense
+            style={styles.paidInput}
+            placeholder="Ketik nominal uang..."
+            placeholderTextColor={colors.textMuted}
+            autoFocus
+          />
+          {paid > 0 ? (
+            <Text style={[styles.paidText, !enough && styles.paidBad]}>
+              {rupiah(paid)} {enough ? '' : '(kurang)'}
+            </Text>
+          ) : null}
+        </View>
+      ) : null}
 
+      {/* Hasil */}
       <View style={styles.changeRow}>
         <Text style={styles.changeLabel}>{method === 'qris' ? 'Status' : 'Kembalian'}</Text>
         <Text style={[styles.changeValue, !enough && styles.paidBad]}>
-          {method === 'qris' ? 'Bayar penuh via QRIS' : enough ? rupiah(change) : 'Kurang ' + rupiah(total - paid)}
+          {method === 'qris' ? 'Bayar penuh via QRIS' : enough ? rupiah(change) : 'Kurang ' + rupiah(finalTotal - paid)}
         </Text>
       </View>
 
+      {/* Tombolaksi */}
       <Button
         mode="contained"
         disabled={!enough || cart.length === 0}
-        onPress={() => { onConfirm(method, paid, discount); reset() }}
+        onPress={() => { onConfirm(method, paid, calculatedDiscount); reset() }}
         contentStyle={styles.confirmBtn}
       >
         Konfirmasi & Selesai
       </Button>
-      <Button mode="text" onPress={() => { reset(); onClose() }} textColor={colors.textMuted} style={styles.cancelBtn}>
+      <Button mode="text" onPress={() => { reset(); onConfirm ? onClose() : void 0 }} textColor={colors.textMuted} style={styles.cancelBtn}>
         Batal
       </Button>
     </Modal>
@@ -126,29 +138,20 @@ export default function CheckoutSheet({ visible, cart, onClose, onConfirm }: Pro
 }
 
 const styles = StyleSheet.create({
-  modal: {
-    backgroundColor: '#FFFFFF',
-    margin: 20,
-    borderRadius: 20,
-    padding: 22,
-  },
+  modal: { backgroundColor: '#FFFFFF', margin: 20, borderRadius: 20, padding: 22 },
   title: { fontWeight: '800', color: colors.text, marginBottom: 14 },
-  totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   totalLabel: { fontSize: 15, color: colors.textMuted },
   totalValue: { fontSize: 26, fontWeight: '800', color: colors.text },
-  segmented: { marginBottom: 16 },
-  label: { fontSize: 13, fontWeight: '600', color: colors.textMuted, marginBottom: 6 },
-  paidBox: { borderWidth: 1, borderColor: colors.border, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 16 },
-  paidText: { fontSize: 28, fontWeight: '800', color: colors.text },
-  paidBad: { color: colors.error },
-  quickRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 },
-  discRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
+  discRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginVertical: 8 },
   discBtn: { flex: 1 },
   discInput: { flex: 2, backgroundColor: '#FFF', height: 40 },
-  discApplied: { color: colors.terra, fontWeight: '700', fontSize: 13, marginBottom: 6 },
-  quickBtn: { borderColor: colors.border },
-  qrisBox: { backgroundColor: colors.chipBg, borderRadius: 12, padding: 16 },
-  qrisText: { color: colors.greenDark, fontSize: 14, lineHeight: 20 },
+  discApplied: { fontSize: 13, fontWeight: '600', color: colors.terra, textAlign: 'center', marginBottom: 4 },
+  segmented: { marginBottom: 16 },
+  label: { fontSize: 13, fontWeight: '600', color: colors.textMuted, marginBottom: 6, marginTop: 12 },
+  paidInput: { backgroundColor: '#FFF', height: 52, borderRadius: 12, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 14, fontSize: 24, fontWeight: '700', color: colors.text },
+  paidText: { fontSize: 24, fontWeight: '800', color: colors.text, marginTop: 8 },
+  paidBad: { color: colors.error },
   changeRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginVertical: 16 },
   changeLabel: { fontSize: 15, color: colors.textMuted },
   changeValue: { fontSize: 24, fontWeight: '800', color: colors.green },

@@ -63,7 +63,7 @@ export default function HistoryScreen() {
             onPress={() => setPeriod(p)}
             style={[styles.tab, period === p && styles.tabActive]}
           >
-            <RNText style={[styles.tabTxt, period === p && styles.tabTxtActive]}>{PERIOD_LABEL[period]}</RNText>
+            <RNText style={[styles.tabTxt, period === p && styles.tabTxtActive]}>{PERIOD_LABEL[p]}</RNText>
           </Pressable>
         ))}
       </View>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { View } from 'react-native'
-import { PaperProvider, Appbar, SegmentedButtons } from 'react-native-paper'
+import { PaperProvider, Appbar } from 'react-native-paper'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { StatusBar } from 'expo-status-bar'
 
@@ -13,6 +13,7 @@ import CashierScreen from './src/screens/CashierScreen'
 import HistoryScreen from './src/screens/HistoryScreen'
 import ManageProductsScreen from './src/screens/ManageProductsScreen'
 import SettingsScreen from './src/screens/SettingsScreen'
+import FloatingBottomBar from './src/components/FloatingBottomBar'
 
 type Tab = 'kasir' | 'produk' | 'riwayat' | 'pengaturan'
 
@@ -74,7 +75,7 @@ export default function App() {
               />
             </Appbar.Header>
 
-            <View style={{ flex: 1 }}>
+            <View style={{ flex: 1, backgroundColor: colors.bg }}>
               {tab === 'kasir' && <CashierScreen onSold={() => setRefreshKey((k) => k + 1)} />}
               {tab === 'produk' && <ManageProductsScreen key={refreshKey} />}
               {tab === 'riwayat' && <HistoryScreen key={refreshKey} />}
@@ -86,19 +87,7 @@ export default function App() {
               )}
             </View>
 
-            <View style={{ paddingHorizontal: 14, paddingBottom: 10, backgroundColor: colors.bg }}>
-              <SegmentedButtons
-                value={tab}
-                onValueChange={(v) => setTab(v as Tab)}
-                buttons={[
-                  { value: 'kasir', label: '🧾 Kasir', showSelectedCheck: false },
-                  { value: 'produk', label: '📦 Produk', showSelectedCheck: false },
-                  { value: 'riwayat', label: '📊 Laporan', showSelectedCheck: false },
-                  { value: 'pengaturan', label: '⚙️ Lainnya', showSelectedCheck: false },
-                ]}
-                style={{ backgroundColor: dark ? '#1D2C29' : '#FFFFFF' }}
-              />
-            </View>
+            <FloatingBottomBar active={tab} onChange={setTab} />
           </View>
         )}
       </SafeAreaProvider>

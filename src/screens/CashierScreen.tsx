@@ -2,9 +2,8 @@ import React, { useMemo, useState } from 'react'
 import { View, StyleSheet, ScrollView, Pressable, Image } from 'react-native'
 import { Text, Surface, Modal } from 'react-native-paper'
 import { colors } from '../theme/theme'
-import { listProducts, listModifierGroups, cartTotals, checkout, type Product, type ModifierGroup, type CartLine } from '../utils/pos'
+import { listProducts, cartTotals, checkout, type Product, type CartLine } from '../utils/pos'
 import StickyCartBar, { rupiah } from '../components/StickyCartBar'
-import ModifierSheet from '../components/ModifierSheet'
 import CheckoutSheet from '../components/CheckoutSheet'
 import { buildReceiptText, printReceipt } from '../utils/receipt'
 import { shareReceipt } from '../utils/export'
@@ -13,50 +12,20 @@ export default function CashierScreen({ onSold }: { onSold: () => void }) {
   const products = useMemo(() => listProducts(), [])
   const [cart, setCart] = useState<CartLine[]>([])
   const [pickProduct, setPickProduct] = useState<Product | null>(null)
-  const [groups, setGroups] = useState<ModifierGroup[]>([])
-  const [selected, setSelected] = useState<Map<number, string[]>>(new Map())
   const [showCheckout, setShowCheckout] = useState(false)
   const [lastSale, setLastSale] = useState<string | null>(null)
   const [lastTxId, setLastTxId] = useState<number | null>(null)
 
   const { total, itemCount } = cartTotals(cart)
 
-  // Load modifier groups lazily when a product is picked
   const openProduct = (p: Product) => {
     setPickProduct(p)
-    setSelected(new Map())
-    setGroups(listModifierGroups(p.id))
-  }
-
-  const toggleMod = (groupId: number, _modId: number, label: string) => {
-    setSelected((prev) => {
-      const next = new Map(prev)
-      const group = groups.find((g) => g.id === groupId)!
-      const current = next.get(groupId) || []
-      if (group.max_select === 1) {
-        next.set(groupId, current.includes(label) ? [] : [label])
-      } else {
-        if (current.includes(label)) {
-          next.set(groupId, current.filter((l) => l !== label))
-        } else if (current.length < group.max_select) {
-          next.set(groupId, [...current, label])
-        }
-      }
-      return next
-    })
   }
 
   const addLine = () => {
     if (!pickProduct) return
-    const mods = groups.flatMap((g) =>
-      (selected.get(g.id) || []).map((label) => ({
-        label,
-        extra_price: g.modifiers.find((m) => m.label === label)?.extra_price ?? 0,
-      }))
-    )
-    const key = `${pickProduct.id}::${mods.map((m) => m.label).sort().join('+')}`
-    const unitPrice = pickProduct.price + mods.reduce((s, m) => s + m.extra_price, 0)
-
+    const key = String(pickProduct.id)
+    const unitPrice = pickProduct.price
     setCart((prev) => {
       const existing = prev.find((l) => l.key === key)
       if (existing) {
@@ -70,7 +39,7 @@ export default function CashierScreen({ onSold }: { onSold: () => void }) {
           productName: pickProduct.name,
           basePrice: pickProduct.price,
           qty: 1,
-          modifiers: mods,
+          modifiers: [],
           unitPrice,
         },
       ]
@@ -167,21 +136,14 @@ export default function CashierScreen({ onSold }: { onSold: () => void }) {
 
       <StickyCartBar visible cart={cart} total={total} onCheckout={() => setShowCheckout(true)} />
 
-      {/* Modifier picker */}
+      {/* Product confirm sheet — no more modifier picker */}
       <Modal visible={!!pickProduct} onDismiss={() => setPickProduct(null)} contentContainerStyle={styles.sheet}>
         {pickProduct ? (
           <>
             <Text variant="headlineSmall" style={styles.sheetTitle}>{pickProduct.name}</Text>
             <Text style={styles.sheetPrice}>{rupiah(pickProduct.price)}</Text>
-            {groups.length > 0 ? (
-              <ModifierSheet groups={groups} selected={selected} onToggle={toggleMod} onDone={addLine} />
-            ) : (
-              <Surface style={styles.noMod} elevation={0}>
-                <Text style={{ color: colors.textMuted }}>Produk tanpa varian.</Text>
-              </Surface>
-            )}
             <Pressable onPress={addLine} style={styles.addPlainBtn}>
-              <Text style={styles.addPlainTxt}>Tambah Polos</Text>
+              <Text style={styles.addPlainTxt}>✓ Tambah ke Pesanan</Text>
             </Pressable>
           </>
         ) : null}
@@ -276,12 +238,10 @@ const styles = StyleSheet.create({
   stepBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
   stepTxt: { fontSize: 20, fontWeight: '900', color: colors.greenDark, lineHeight: 24 },
   stepQty: { minWidth: 30, textAlign: 'center', fontSize: 15, fontWeight: '900', color: colors.text },
-  sheet: { backgroundColor: '#FFF', margin: 18, borderRadius: 20, padding: 22 },
   sheetTitle: { fontWeight: '800', color: colors.text },
   sheetPrice: { fontSize: 18, fontWeight: '800', color: colors.greenDark, marginBottom: 16 },
-  noMod: { backgroundColor: '#FDF0D5', borderRadius: 12, padding: 16, alignItems: 'center' },
   addPlainBtn: { marginTop: 12, alignItems: 'center', paddingVertical: 8 },
-  addPlainTxt: { color: colors.blue, fontWeight: '700' },
+  addPlainTxt: { color: colors.greenDark, fontWeight: '700', fontSize: 16 },
   toast: {
     position: 'absolute', top: 14, alignSelf: 'center',
     backgroundColor: colors.chipBg, borderRadius: 999,

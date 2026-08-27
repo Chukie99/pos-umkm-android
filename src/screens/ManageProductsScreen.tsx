@@ -27,26 +27,32 @@ export default function ManageProductsScreen() {
     setEditing({ id: p.id, name: p.name, price: String(p.price), stock: p.stock === null ? '' : String(p.stock), imageUri: p.image_uri, categoryId: p.category_id })
 
   const pickImage = async () => {
-    try {
-      const ImagePicker = await import('expo-image-picker')
-      const perm = await ImagePicker.requestMediaLibraryPermissionsAsync()
-      if (!perm.granted) {
-        Alert.alert('Izin dibutuhkan', 'Berikan izin akses galeri untuk memilih foto produk.')
-        return
+      try {
+        const ImagePicker = await import('expo-image-picker')
+        const FileSystem = await import('expo-file-system')
+        const perm = await ImagePicker.requestMediaLibraryPermissionsAsync()
+        if (!perm.granted) {
+          Alert.alert('Izin dibutuhkan', 'Berikan izin akses galeri untuk memilih foto produk.')
+          return
+        }
+        const res = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ['images'],
+          quality: 0.5,
+          allowsEditing: true,
+          aspect: [1, 1],
+        })
+        if (res.canceled || !res.assets?.[0]) return
+        const asset = res.assets[0]
+        // Kuar ke file lokal supaya URI tetap valid
+        const fileName = asset.uri.split('/').pop()
+        const destUri = `${FileSystem.documentDirectory}pos_images/${fileName}`
+        await FileSystem.makeDirectoryAsync(FileSystem.documentDirectory + 'pos_images/', { intermediates: true })
+        await FileSystem.copyAsync({ from: asset.uri, to: destUri })
+        setEditing((prev) => (prev ? { ...prev, imageUri: destUri } : prev))
+      } catch (e) {
+        Alert.alert('Gagal', e instanceof Error ? e.message : String(e))
       }
-      const res = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        quality: 0.5,
-        allowsEditing: true,
-        aspect: [1, 1],
-      })
-      if (!res.canceled && res.assets[0]) {
-        setEditing((prev) => (prev ? { ...prev, imageUri: res.assets[0].uri } : prev))
-      }
-    } catch (e) {
-      Alert.alert('Gagal', e instanceof Error ? e.message : String(e))
     }
-  }
 
   const save = () => {
     if (!editing) return

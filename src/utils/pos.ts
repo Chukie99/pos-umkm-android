@@ -9,22 +9,13 @@ export interface Product {
   category_name: string | null
 }
 
-export interface ModifierGroup {
-  id: number
-  product_id: number
-  name: string
-  min_select: number
-  max_select: number
-  modifiers: { id: number; label: string; extra_price: number }[]
-}
-
 export interface CartLine {
   key: string
   productId: number
   productName: string
   basePrice: number
   qty: number
-  modifiers: { label: string; extra_price: number }[]
+  modifiers: []
   unitPrice: number
 }
 
@@ -35,25 +26,6 @@ export function listProducts(): Product[] {
        FROM products p LEFT JOIN categories c ON c.id = p.category_id
        WHERE p.is_active = 1 ORDER BY p.name`
     )
-}
-
-export function listModifierGroups(productId: number): ModifierGroup[] {
-  const db = getDb()
-  const groups = db.getAllSync<ModifierGroup>(
-    'SELECT * FROM modifier_groups WHERE product_id = ?',
-    [productId]
-  )
-  for (const g of groups) {
-    g.modifiers = db.getAllSync(
-      'SELECT id, label, extra_price FROM modifiers WHERE group_id = ? ORDER BY extra_price, label',
-      [g.id]
-    ) as ModifierGroup['modifiers']
-  }
-  return groups
-}
-
-export function lineUnitPrice(basePrice: number, mods: CartLine['modifiers']): number {
-  return basePrice + mods.reduce((s, m) => s + m.extra_price, 0)
 }
 
 export function cartTotals(cart: CartLine[], discount = 0) {

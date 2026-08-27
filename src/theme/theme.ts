@@ -11,6 +11,19 @@ import { MD3LightTheme, configureFonts } from 'react-native-paper'
  * Primary teal dipakai ketat untuk tombol utama (Bayar/Checkout)
  * supaya jempol selalu mendarat di tombol yang benar.
  */
+
+// Font: pakai system default untuk konsistensi tiap platform.
+// Di Android → 'sans-serif', iOS → '.SF Pro Text'. Tanpa hal ini,
+// tema gelap malah terlihat suram karena fallback font tipis.
+const fontConfig = {
+  default: {
+    regular: { fontFamily: 'System', fontWeight: '400' },
+    medium: { fontFamily: 'System', fontWeight: '500' },
+    light: { fontFamily: 'System', fontWeight: '300' },
+    thin: { fontFamily: 'System', fontWeight: '200' },
+  },
+}
+
 export const theme = {
   ...MD3LightTheme,
   colors: {
@@ -34,39 +47,45 @@ export const theme = {
     outline: '#8A8578',
     outlineVariant: '#EADFC8',
   },
-  fonts: configureFonts({ config: { fontFamily: 'Roboto' } }),
+  fonts: configureFonts({ config: fontConfig }),
 }
 
 function palette(mode: 'light' | 'dark') {
+  const base = {
+    teal: '#249D8F',
+    yellow: '#E9C46A',
+    terracotta: '#E76F51',
+    cream: '#FDF0D5',
+  }
   if (mode === 'dark') {
     return {
-      bg: '#14201E',
+      bg: '#0E1E1C',
       text: '#F0EBDF',
       textMuted: '#A8B5B0',
-      green: '#2FB3A3',       // teal lebih terang utk dark mode
+      green: base.teal,       // teal utama tetap konsisten
       greenDark: '#7BD9CE',
       blue: '#E8845F',
-      yellow: '#E9C46A',
-      terra: '#F08A6C',
+      yellow: base.yellow,
+      terra: base.terracotta,
       cream: '#1D2C29',
       chipBg: '#1D2C29',
       badgeBg: '#3A2F14',
-      badgeText: '#F2C14E',
+      badgeText: base.yellow,
       border: '#2A3B37',
-      error: '#F08A6C',
+      error: base.terracotta,
     }
   }
   return {
     bg: '#FBF6EC',
     text: '#2A2721',
     textMuted: '#6E6A5E',
-    green: '#249D8F',
+    green: base.teal,
     greenDark: '#17766B',
-    blue: '#B3571F',
-    yellow: '#E9C46A',
-    terra: '#E76F51',
-    cream: '#FDF0D5',
-    chipBg: '#FDF0D5',
+    blue: base.blue,
+    yellow: base.yellow,
+    terra: base.terracotta,
+    cream: base.cream,
+    chipBg: '#FFF8F0',
     badgeBg: '#FBEFD2',
     badgeText: '#9A5312',
     border: '#EADFC8',
