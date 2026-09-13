@@ -20,11 +20,13 @@ import KasbonScreen from './src/screens/KasbonScreen'
 import ShiftScreen from './src/screens/ShiftScreen'
 import SupplierScreen from './src/screens/SupplierScreen'
 import FloatingBottomBar from './src/components/FloatingBottomBar'
+import ErrorBoundary from './src/components/ErrorBoundary'
 
 type Tab = 'kasir' | 'produk' | 'riwayat' | 'kasbon' | 'supplier' | 'shift' | 'pengaturan'
 
 export default function App() {
   const [ready, setReady] = useState(false)
+  const [initErr, setInitErr] = useState<string|null>(null)
   const [activated, setActivated] = useState(false)
   const [deviceCode, setDeviceCode] = useState('')
   const [tab, setTab] = useState<Tab>('kasir')
@@ -34,17 +36,22 @@ export default function App() {
   const [produkModalOpen, setProdukModalOpen] = useState(false)
 
   useEffect(() => {
+    // catch JS crash biar ErrorBoundary kepanggil, jangan silent close
+    const prev = (globalThis as any).ErrorUtils?.getGlobalHandler?.()
+    try { (globalThis as any).ErrorUtils?.setGlobalHandler?.((e:any, fatal:any)=>{ console.error('GLOBAL', e); if(prev) prev(e,fatal); throw e; })} catch{}
     SplashScreen.preventAutoHideAsync().catch(() => {})
     ;(async () => {
-      try { await Font.loadAsync(MaterialCommunityIcons.font) } catch {}
-      initDatabase()
-      seedDemoData()
-      setDeviceCode(formatDeviceCode(getDeviceId()))
-      setActivated(isActivated())
-      const pref: ThemePref = getTheme()
-      applyTheme(pref)
-      setDark(pref === 'dark')
-      setReady(true)
+      try {
+        try { await Font.loadAsync(MaterialCommunityIcons.font) } catch {}
+        initDatabase()
+        seedDemoData()
+        setDeviceCode(formatDeviceCode(getDeviceId()))
+        setActivated(isActivated())
+        const pref: ThemePref = getTheme()
+        applyTheme(pref)
+        setDark(pref === 'dark')
+      } catch(e:any) { setInitErr(e?.message||String(e)+'\n'+(e?.stack||'')); }
+      finally { setReady(true) }
     })()
   }, [])
 
@@ -79,6 +86,11 @@ export default function App() {
     setThemeTick((t) => t + 1)
   }
 
+  if (initErr) {
+    return (
+      <View style={{flex:1,backgroundColor:'#0F2440',padding:16,paddingTop:40}}><Text style={{color:'#FFF',fontSize:16,fontWeight:'900'}}>💥 Gagal init DB — screenshot ini</Text><View style={{backgroundColor:'#FFF',borderRadius:12,marginTop:14,padding:12}}><Text style={{fontFamily:'monospace',fontSize:10,color:'#B91C1C'}}>{initErr}</Text></View><Text style={{color:'#7895B2',fontSize:10,marginTop:8}}>Kirim WA ke dev — v1.1.4 DEBUG</Text></View>
+    )
+  }
   if (!ready) {
     return (
       <View style={{ flex: 1, backgroundColor: '#0F2440', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}>
@@ -96,6 +108,7 @@ export default function App() {
   }
 
   return (
+    <ErrorBoundary>
     <PaperProvider theme={theme}>
       <SafeAreaProvider>
         <StatusBar style={dark ? 'light' : 'dark'} />
@@ -145,5 +158,6 @@ export default function App() {
         )}
       </SafeAreaProvider>
     </PaperProvider>
+    </ErrorBoundary>
   )
 }
