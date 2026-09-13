@@ -7,7 +7,7 @@ import { listCategories } from '../utils/products'
 import StickyCartBar, { rupiah } from '../components/StickyCartBar'
 import CheckoutSheet from '../components/CheckoutSheet'
 import { buildReceiptText, printReceipt } from '../utils/receipt'
-import { printViaBluetoothFallback } from '../utils/bluetooth'
+import { printViaBluetoothFallback, getSavedPrinter } from '../utils/bluetooth'
 import { shareReceipt } from '../utils/export'
 
 export default function CashierScreen({ onSold }: { onSold: () => void }) {
@@ -167,8 +167,13 @@ export default function CashierScreen({ onSold }: { onSold: () => void }) {
           </View>
         )}
         <View style={styles.successBtnRow}>
-          <Button mode="outlined" icon="bluetooth" onPress={async () => { if (success?.txId) { try { const r = await printViaBluetoothFallback(buildReceiptText(success.txId)); if (r==='shared') await printReceipt(success.txId); } catch{} } }} style={{ flex: 1 }}>
-            Bluetooth
+          <Button mode="outlined" icon="bluetooth" onPress={async () => {
+            if (!success?.txId) return
+            const addr = getSavedPrinter()
+            if (!addr) { const { Alert } = await import('react-native'); Alert.alert('Printer belum dikonek', 'Buka Pengaturan > Printer Bluetooth untuk Cari Printer / isi MAC dulu, baru cetak.', [{text:'OK'}]); return }
+            try { const r = await printViaBluetoothFallback(buildReceiptText(success.txId)); if (r==='shared') await printReceipt(success.txId); } catch{}
+          }} style={{ flex: 1 }}>
+            Cetak BT
           </Button>
           <Button mode="outlined" icon="printer" onPress={async () => { if (success?.txId) try { await printReceipt(success.txId) } catch {} }} style={{ flex: 1 }}>
             Cetak

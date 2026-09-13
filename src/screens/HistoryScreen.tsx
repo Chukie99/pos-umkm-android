@@ -8,7 +8,7 @@ import { voidTransaction } from '../utils/pos'
 import { payBon } from '../utils/kasbon'
 import { buildReceiptText, printReceipt, shareReceiptPdf } from '../utils/receipt'
 import { shareReceipt } from '../utils/export'
-import { printViaBluetoothFallback } from '../utils/bluetooth'
+import { printViaBluetoothFallback, getSavedPrinter } from '../utils/bluetooth'
 
 type Period = 'today' | 'week' | 'month'
 interface Row {
@@ -196,7 +196,11 @@ export default function HistoryScreen() {
               </View>
             ) : null}
             <View style={{ flexDirection:'row', gap:10, marginTop:6 }}>
-              <Button mode="outlined" icon="bluetooth" onPress={async () => { try { const r = await printViaBluetoothFallback(buildReceiptText(detail.id)); if (r==='shared') await shareReceiptPdf(detail.id); } catch(e:any){ Alert.alert('Info', 'Belum paired — fallback ke PDF/share. Pasangkan printer di Bluetooth settings dulu.') } }} style={{ flex:1 }}>Cetak Bluetooth</Button>
+              <Button mode="outlined" icon="bluetooth" onPress={async () => {
+                const addr = getSavedPrinter()
+                if (!addr) { Alert.alert('Printer belum dikonek','Buka Pengaturan > Printer Bluetooth untuk Cari Printer / isi MAC dulu.'); return }
+                try { const r = await printViaBluetoothFallback(buildReceiptText(detail.id)); if (r==='shared') await shareReceiptPdf(detail.id); } catch(e:any){ Alert.alert('Info', 'Gagal Bluetooth — fallback ke PDF. Pastikan sudah Pair & printer nyala.') }
+              }} style={{ flex:1 }}>Cetak BT</Button>
             </View>
             <View style={styles.detailBtns}>
               <Button mode="outlined" icon="printer" onPress={async () => { try { await printReceipt(detail.id) } catch (e: any) { Alert.alert('Gagal cetak', String(e?.message || e)) } }} style={{ flex: 1 }}>Cetak Ulang</Button>
